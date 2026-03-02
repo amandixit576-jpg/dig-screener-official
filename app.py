@@ -1,107 +1,103 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
-from datetime import datetime
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Pro Terminal | Stock Screener", layout="wide", initial_sidebar_state="expanded")
+# --- 1. PAGE SETUP ---
+st.set_page_config(page_title="Pro Terminal", layout="wide")
 
-# --- CUSTOM BRANDING & HEADER ---
-st.markdown("""
-    <div style='text-align: center; padding: 10px;'>
-        <h1 style='color: #1E88E5; font-family: "Arial Black", sans-serif;'>🏢 Dixit Capital & Wealth Management</h1>
-        <p style='font-style: italic; color: #888888; font-size: 18px;'>Advanced Quantitative Analysis & Portfolio Tracking</p>
-    </div>
-    <hr>
-""", unsafe_allow_html=True)
+# --- 2. HEADER & BRANDING ---
+st.markdown("<h1 style='text-align: center; color: #1E88E5;'>🏢 Dixit Capital & Wealth Management</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: gray;'>Advanced Stock Screener & Portfolio Tracker</p><hr>", unsafe_allow_html=True)
 
-# --- SIDEBAR: CONTROLS ---
-st.sidebar.header("⚙️ Terminal Settings")
-
-risk_profile = st.sidebar.selectbox(
-    "Client Risk Appetite:", 
-    ["Conservative (Low Risk)", "Moderate (Balanced)", "Aggressive (High Risk)"]
-)
-
-benchmark_ticker = "RELIANCE.NS"
-if risk_profile == "Conservative (Low Risk)":
-    benchmark_ticker = "LIQUIDBEES.NS"
-elif risk_profile == "Moderate (Balanced)":
-    benchmark_ticker = "NIFTYBEES.NS"
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("🔍 Equity Search")
-raw_ticker = st.sidebar.text_input("Enter Company Name/Symbol:", "RELIANCE").upper()
+# --- 3. SIDEBAR SETTINGS ---
+st.sidebar.header("⚙️ Settings")
+risk = st.sidebar.selectbox("Risk Profile:", ["Conservative", "Balanced", "Aggressive"])
+raw_ticker = st.sidebar.text_input("Enter NSE Stock (e.g., ZOMATO):", "RELIANCE").upper()
 user_ticker = raw_ticker if raw_ticker.endswith(".NS") else f"{raw_ticker}.NS"
 
-st.sidebar.caption("Example: HDFCBANK, TCS, ZOMATO")
-
-# --- DATA FETCHING ENGINE ---
+# --- 4. DATA ENGINE (Super Safe Mode) ---
 @st.cache_data(ttl=300)
-def fetch_market_data(symbol):
+def get_data(symbol):
     try:
-        stock = yf.Ticker(symbol)
-        return stock.history(period="1y")
+        return yf.Ticker(symbol).history(period="1y")
     except:
         return None
 
 @st.cache_data(ttl=3600)
-def fetch_fundamentals(symbol):
+def get_info(symbol):
     try:
-        stock = yf.Ticker(symbol)
-        return stock.info
+        return yf.Ticker(symbol).info
     except:
         return {}
 
 @st.cache_data(ttl=1800)
-def fetch_news(symbol):
+def get_news(symbol):
     try:
-        stock = yf.Ticker(symbol)
-        return stock.news
+        return yf.Ticker(symbol).news
     except:
         return []
 
-data = fetch_market_data(user_ticker)
-info = fetch_fundamentals(user_ticker)
-news_data = fetch_news(user_ticker)
+data = get_data(user_ticker)
+info = get_info(user_ticker)
+news = get_news(user_ticker)
 
-# --- MAIN DASHBOARD ---
+# --- 5. MAIN DASHBOARD ---
 if data is not None and not data.empty:
     
+    # Calculate Prices safely
     curr_price = data['Close'].iloc[-1]
     prev_price = data['Close'].iloc[-2]
-    price_change = curr_price - prev_price
-    pct_change = (price_change / prev_price) * 100
-    
-    data['SMA_50'] = data['Close'].rolling(window=50).mean()
-    data['SMA_200'] = data['Close'].rolling(window=200).mean()
-    
-    # Top Metrics Row
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric(label=f"{raw_ticker} - Last Traded Price", 
-                  value=f"₹{curr_price:.2f}", 
-                  delta=f"{price_change:.2f} ({pct_change:.2f}%)")
-    with col2:
-        st.metric(label="50-Day SMA", value=f"₹{data['SMA_50'].iloc[-1]:.2f}" if not data['SMA_50'].isna().iloc[-1] else "N/A")
-    with col3:
-        st.metric(label="200-Day SMA", value=f"₹{data['SMA_200'].iloc[-1]:.2f}" if not data['SMA_200'].isna().iloc[-1] else "N/A")
-        
-    # --- TABS ---
-    tab1, tab2, tab3 = st.tabs(["📈 Technical Analysis", "📋 Fundamental Audit", "📰 Latest News"])
-    
-    with tab1:
-        st.markdown("### Interactive Technical Chart")
+    change = curr_price - prev_price
+    pct = (change / prev_price) * 100
+
+    data['SMA50'] = data['Close'].rolling(50).mean()
+    data['SMA200'] = data['Close'].rolling(200).mean()
+    sma50_val = data['SMA50'].iloc[-1]
+    sma200_val = data['SMA200'].iloc[-1]
+
+    # Metrics Row
+    c1, c2, c3 = st.columns(3)
+    c1.metric(f"{raw_ticker} Price", f"₹{curr_price:.2f}", f"{change:.2f} ({pct:.2f}%)")
+    c2.metric("50-Day SMA", f"₹{sma50_val:.2f}" if str(sma50_val) != 'nan' else "N/A")
+    c3.metric("200-Day SMA", f"₹{sma200_val:.2f}" if str(sma200_val) != 'nan' else "N/A")
+
+    # Tabs Creation
+    t1, t2, t3 = st.tabs(["📈 Technical Chart", "📋 Fundamentals", "📰 Latest News"])
+
+    # TAB 1: Chart
+    with t1:
         fig = go.Figure()
-        
-        fig.add_trace(go.Candlestick(
-            x=data.index,
-            open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'],
-            name='Market Price',
-            increasing_line_color='#26A69A', decreasing_line_color='#EF5350'
-        ))
-        fig.add_trace(go.Scatter(x=data.index, y=data['SMA_50'], line=dict(color='orange', width=1.5), name='50-Day SMA'))
-        fig.add_trace(go.Scatter(x=data.index, y=data['SMA_200'], line=dict(color='blue', width=1.5), name='200-Day SMA'))
-        
-        fig.update_layout(template="plotly_dark", margin=dict(l=10, r=10, t=30, b=10), height=550, xaxis_rangeslider_visible=False, legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-        st.plotly_
+        fig.add_trace(go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'], name='Price'))
+        fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], line=dict(color='orange'), name='50 SMA'))
+        fig.add_trace(go.Scatter(x=data.index, y=data['SMA200'], line=dict(color='blue'), name='200 SMA'))
+        fig.update_layout(template="plotly_dark", margin=dict(t=20, b=20, l=10, r=10), height=550, xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+    # TAB 2: Fundamentals
+    with t2:
+        if info:
+            mc = info.get('marketCap', 0)
+            st.write(f"**Market Cap:** ₹{mc / 10000000:.2f} Cr" if mc else "**Market Cap:** N/A")
+            
+            f1, f2, f3, f4 = st.columns(4)
+            f1.metric("P/E Ratio", round(info.get('trailingPE', 0), 2) if info.get('trailingPE') else "N/A")
+            f2.metric("ROE", f"{round(info.get('returnOnEquity', 0)*100, 2)}%" if info.get('returnOnEquity') else "N/A")
+            f3.metric("Book Value", f"₹{round(info.get('bookValue', 0), 2)}" if info.get('bookValue') else "N/A")
+            f4.metric("Debt/Equity", round(info.get('debtToEquity', 0), 2) if info.get('debtToEquity') else "N/A")
+            
+            st.write("---")
+            st.write(f"**About Company:** {info.get('longBusinessSummary', 'No description.')[:500]}...")
+        else:
+            st.warning("⚠️ Fundamental data not available.")
+
+    # TAB 3: News
+    with t3:
+        if news:
+            for n in news[:5]:
+                st.write(f"🔹 **[{n.get('title', 'Read News')}]({n.get('link', '#')})** - *(Source: {n.get('publisher', 'Web')})*")
+                st.write("---")
+        else:
+            st.info("No recent news found.")
+
+else:
+    st.error("⚠️ Invalid Stock Symbol. Please check the name and try again.")
