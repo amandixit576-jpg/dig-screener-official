@@ -1,29 +1,40 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
-import numpy as np
+import urllib.parse
 
 # --- 1. PAGE SETUP ---
 st.set_page_config(page_title="Pro Terminal | Dixit Capital", layout="wide", initial_sidebar_state="expanded")
 
-# --- 2. POPUP FORM ---
+# --- 2. LEAD GENERATION (WHATSAPP AUTOMATION) ---
 @st.dialog("👑 Unlock Premium Access")
 def premium_signup():
-    st.markdown("Join **Dixit Capital Premium** for advanced CA-level audits, real-time alerts, and personalized portfolio management.")
-    with st.form("premium_form"):
-        name = st.text_input("Full Name")
-        phone = st.text_input("WhatsApp Number")
-        if st.form_submit_button("Request Access"):
-            if name and phone:
-                st.success(f"Thank you {name}! Our wealth management team will contact you shortly.")
-            else:
-                st.error("Please enter your name and phone number.")
+    st.markdown("Join **Dixit Capital Premium** for advanced audits, live alerts, and portfolio management.")
+    
+    # YAHAN APNA ASLI WHATSAPP NUMBER DAALIYE (Country code 91 ke sath, bina + lagaye)
+    YOUR_WHATSAPP_NUMBER = "917052360459" # Example: "919988776655"
+    
+    name = st.text_input("Full Name")
+    city = st.text_input("City")
+    
+    if st.button("Request Access via WhatsApp", type="primary"):
+        if name and city:
+            # WhatsApp message format karna
+            raw_message = f"Hello Dixit Capital! 📈\n\nI want to join the Premium Membership.\nName: {name}\nCity: {city}\n\nPlease share the details."
+            encoded_message = urllib.parse.quote(raw_message)
+            whatsapp_url = f"https://wa.me/{YOUR_WHATSAPP_NUMBER}?text={encoded_message}"
+            
+            # User ko WhatsApp par bhejna
+            st.success("Redirecting to WhatsApp...")
+            st.markdown(f'<meta http-equiv="refresh" content="0; url={whatsapp_url}">', unsafe_allow_html=True)
+        else:
+            st.error("Please enter your name and city.")
 
 # --- 3. BRANDING ---
 st.markdown("<h1 style='text-align: center; color: #1E88E5;'>🏢 Dixit Capital & Wealth Management</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: gray;'>Advanced Quantitative Analysis & Portfolio Tracking</p><hr>", unsafe_allow_html=True)
 
-# --- 4. TOP STOCKS DICT ---
+# --- 4. TOP STOCKS LIST ---
 TOP_STOCKS = {
     "HOME": "🏠 Home (Dashboard & Tools)",
     "RELIANCE.NS": "Reliance Industries",
@@ -32,11 +43,14 @@ TOP_STOCKS = {
     "ICICIBANK.NS": "ICICI Bank",
     "INFY.NS": "Infosys",
     "ZOMATO.NS": "Zomato",
-    "TATAMOTORS.NS": "Tata Motors"
+    "TATAMOTORS.NS": "Tata Motors",
+    "ITC.NS": "ITC Limited",
+    "SBI.NS": "State Bank of India"
 }
 
-# --- 5. SIDEBAR ---
+# --- 5. SIDEBAR & SEARCH ---
 st.sidebar.header("⚙️ Main Menu")
+
 if st.sidebar.button("👑 Upgrade to Premium", use_container_width=True):
     premium_signup()
 
@@ -57,18 +71,17 @@ if manual_ticker:
 else:
     user_ticker = selected_ticker
 
-# Helper to fetch indices
+# Helper function for fast indexing
 @st.cache_data(ttl=300)
 def get_index_data(ticker):
     try: return yf.Ticker(ticker).history(period="2d")
     except: return None
 
-# --- 6. MAIN DASHBOARD LOGIC ---
+# --- 6. HOME DASHBOARD ---
 if user_ticker == "HOME":
-    # 🌟 WELCOME SCREEN & WEALTH TOOLS
     st.markdown("<h3 style='text-align: center;'>Welcome to the Pro Terminal</h3>", unsafe_allow_html=True)
     
-    # -- MARKET PULSE --
+    # Market Pulse
     nifty = get_index_data("^NSEI")
     banknifty = get_index_data("^NSEBANK")
     
@@ -76,31 +89,27 @@ if user_ticker == "HOME":
     col1, col2, col3 = st.columns(3)
     
     if nifty is not None and len(nifty) >= 2:
-        n_curr = nifty['Close'].iloc[-1]
-        n_prev = nifty['Close'].iloc[-2]
+        n_curr, n_prev = nifty['Close'].iloc[-1], nifty['Close'].iloc[-2]
         col1.metric("NIFTY 50", f"{n_curr:.2f}", f"{n_curr - n_prev:.2f} ({(n_curr - n_prev)/n_prev * 100:.2f}%)")
     
     if banknifty is not None and len(banknifty) >= 2:
-        bn_curr = banknifty['Close'].iloc[-1]
-        bn_prev = banknifty['Close'].iloc[-2]
+        bn_curr, bn_prev = banknifty['Close'].iloc[-1], banknifty['Close'].iloc[-2]
         col2.metric("NIFTY BANK", f"{bn_curr:.2f}", f"{bn_curr - bn_prev:.2f} ({(bn_curr - bn_prev)/bn_prev * 100:.2f}%)")
         
-    col3.info("👈 Select a stock from the sidebar to view detailed technicals and fundamentals.")
+    col3.info("👈 Select a stock from the sidebar to view technicals and fundamentals.")
     st.divider()
 
-    # -- WEALTH CALCULATOR --
+    # Wealth Calculator
     st.markdown("#### 💰 SIP Wealth Calculator")
     st.caption("Plan your financial independence with our institutional-grade calculator.")
     
     calc_col1, calc_col2 = st.columns([1, 2])
-    
     with calc_col1:
         sip_amount = st.number_input("Monthly SIP (₹)", min_value=500, value=5000, step=500)
         sip_years = st.slider("Investment Period (Years)", 1, 30, 10)
         sip_rate = st.slider("Expected Annual Return (%)", 5, 25, 12)
     
     with calc_col2:
-        # SIP Calculation Formula: M = P × ({[1 + i]^n - 1} / i) × (1 + i)
         monthly_rate = sip_rate / 12 / 100
         months = sip_years * 12
         invested_amount = sip_amount * months
@@ -111,12 +120,10 @@ if user_ticker == "HOME":
         w_col1, w_col2 = st.columns(2)
         w_col1.metric("Total Invested", f"₹{invested_amount:,.0f}")
         w_col2.metric("Est. Wealth Gained", f"₹{wealth_gained:,.0f}")
-        
-        # Simple progress bar to show growth
         st.progress(min(invested_amount / future_value, 1.0), text="Investment vs Growth Ratio")
 
+# --- 7. STOCK ANALYSIS ENGINE ---
 else:
-    # 📊 STOCK ANALYSIS SCREEN (No changes here, works perfectly)
     @st.cache_data(ttl=300)
     def get_data(symbol):
         try: return yf.Ticker(symbol).history(period="1y")
@@ -131,8 +138,7 @@ else:
     info = get_info(user_ticker)
 
     if data is not None and not data.empty:
-        curr_price = data['Close'].iloc[-1]
-        prev_price = data['Close'].iloc[-2]
+        curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
         change = curr_price - prev_price
         pct = (change / prev_price) * 100
 
@@ -140,6 +146,7 @@ else:
         st.markdown(f"## {display_name}")
         st.metric("Last Traded Price", f"₹{curr_price:.2f}", f"{change:.2f} ({pct:.2f}%)")
 
+        # Interactive Chart
         data['SMA50'] = data['Close'].rolling(50).mean()
         fig = go.Figure()
         fig.add_trace(go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'], name='Price'))
@@ -147,6 +154,7 @@ else:
         fig.update_layout(template="plotly_dark", margin=dict(t=10, b=10, l=10, r=10), height=500, xaxis_rangeslider_visible=False)
         st.plotly_chart(fig, use_container_width=True)
 
+        # Expanders for clean UI
         with st.expander("📋 View Core Fundamentals & Valuation"):
             if info:
                 f1, f2, f3, f4 = st.columns(4)
@@ -168,7 +176,5 @@ else:
                     st.write("No recent news found.")
             except:
                 st.write("Could not load news at this time.")
-
     else:
         st.error("⚠️ Invalid Stock Symbol. Please check the spelling or enter a valid NSE ticker.")
-
