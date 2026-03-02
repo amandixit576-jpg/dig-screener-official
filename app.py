@@ -6,29 +6,31 @@ import urllib.parse
 # --- 1. PAGE SETUP ---
 st.set_page_config(page_title="Pro Terminal | Dixit Capital", layout="wide", initial_sidebar_state="expanded")
 
-# --- 2. LEAD GENERATION (WHATSAPP AUTOMATION) ---
+# --- 2. LEAD GENERATION (SMART WHATSAPP BUTTON) ---
 @st.dialog("👑 Unlock Premium Access")
 def premium_signup():
     st.markdown("Join **Dixit Capital Premium** for advanced audits, live alerts, and portfolio management.")
     
-    # YAHAN APNA ASLI WHATSAPP NUMBER DAALIYE (Country code 91 ke sath, bina + lagaye)
-    YOUR_WHATSAPP_NUMBER = "917052360459" # Example: "919988776655"
+    # YAHAN APNA ASLI WHATSAPP NUMBER DAALIYE (Country code 91 ke sath)
+    YOUR_WHATSAPP_NUMBER = "917052360459" 
     
     name = st.text_input("Full Name")
     city = st.text_input("City")
     
-    if st.button("Request Access via WhatsApp", type="primary"):
-        if name and city:
-            # WhatsApp message format karna
-            raw_message = f"Hello Dixit Capital! 📈\n\nI want to join the Premium Membership.\nName: {name}\nCity: {city}\n\nPlease share the details."
-            encoded_message = urllib.parse.quote(raw_message)
-            whatsapp_url = f"https://wa.me/{YOUR_WHATSAPP_NUMBER}?text={encoded_message}"
-            
-            # User ko WhatsApp par bhejna
-            st.success("Redirecting to WhatsApp...")
-            st.markdown(f'<meta http-equiv="refresh" content="0; url={whatsapp_url}">', unsafe_allow_html=True)
-        else:
-            st.error("Please enter your name and city.")
+    st.write("---")
+    
+    # Smart Logic: Button sirf tabhi chalega jab dono details bhari hon
+    if name and city:
+        raw_message = f"Hello Dixit Capital! 📈\n\nI want to join the Premium Membership.\nName: {name}\nCity: {city}\n\nPlease share the details."
+        encoded_message = urllib.parse.quote(raw_message)
+        whatsapp_url = f"https://wa.me/{YOUR_WHATSAPP_NUMBER}?text={encoded_message}"
+        
+        # Streamlit ka official safe link button
+        st.link_button("📲 Continue to WhatsApp", whatsapp_url, type="primary", use_container_width=True)
+    else:
+        # Jab tak naam nahi daala, button disabled rahega
+        st.button("📲 Continue to WhatsApp", type="primary", disabled=True, use_container_width=True)
+        st.caption("⚠️ Please enter your Name and City to unlock the button.")
 
 # --- 3. BRANDING ---
 st.markdown("<h1 style='text-align: center; color: #1E88E5;'>🏢 Dixit Capital & Wealth Management</h1>", unsafe_allow_html=True)
@@ -45,7 +47,7 @@ TOP_STOCKS = {
     "ZOMATO.NS": "Zomato",
     "TATAMOTORS.NS": "Tata Motors",
     "ITC.NS": "ITC Limited",
-    "SBI.NS": "State Bank of India"
+    "SBIN.NS": "State Bank of India"
 }
 
 # --- 5. SIDEBAR & SEARCH ---
@@ -178,4 +180,3 @@ else:
                 st.write("Could not load news at this time.")
     else:
         st.error("⚠️ Invalid Stock Symbol. Please check the spelling or enter a valid NSE ticker.")
-
