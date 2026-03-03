@@ -119,6 +119,7 @@ if st.sidebar.button("🏠 Home Dashboard", use_container_width=True): st.sessio
 if st.sidebar.button("⚖️ Peer Comparison", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
 if st.sidebar.button("👑 Upgrade to Premium", use_container_width=True): premium_signup()
+if st.sidebar.button("📈 Mutual Funds", use_container_width=True): st.session_state.current_view = "MUTUAL_FUNDS"; st.rerun()
 
 @st.cache_data(ttl=1800)
 def get_live_news(company_name):
@@ -160,6 +161,47 @@ if st.session_state.current_view == "COMPARE":
             ]
         }
         st.table(pd.DataFrame(comp_data).set_index("Metric"))
+# --- 4.5 MUTUAL FUND TRACKER ---
+elif st.session_state.current_view == "MUTUAL_FUNDS":
+    st.markdown("<h2 style='color:#1E88E5;'>📈 Mutual Fund Tracker</h2>", unsafe_allow_html=True)
+    if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
+    st.write("---")
+
+    # Top Indian MFs predefined dictionary
+    MF_DICT = {
+        "Parag Parikh Flexi Cap Fund": "0P0000YWL1.BO",
+        "SBI Small Cap Fund": "0P0000XW8F.BO",
+        "Axis Bluechip Fund": "0P0000XVAA.BO",
+        "HDFC Mid-Cap Opportunities": "0P0000XVU0.BO",
+        "ICICI Prudential Technology Fund": "0P0000XVYV.BO",
+        "Quant Small Cap Fund": "0P0001B61B.BO"
+    }
+
+    selected_mf = st.selectbox("Select a Mutual Fund to Analyze:", list(MF_DICT.keys()))
+    mf_ticker = MF_DICT[selected_mf]
+
+    if st.button("Fetch NAV & Chart 🚀", type="primary"):
+        with st.spinner("Fetching latest NAV..."):
+            mf_data = yf.Ticker(mf_ticker)
+            hist = mf_data.history(period="1y")
+
+            if not hist.empty:
+                current_nav = hist['Close'].iloc[-1]
+                prev_nav = hist['Close'].iloc[-2]
+
+                c1, c2 = st.columns([3, 1])
+                c1.markdown(f"### {selected_mf}")
+                c2.metric("Current NAV", f"₹{format_inr(round(current_nav, 2))}", f"{(current_nav - prev_nav):.2f} ({((current_nav - prev_nav)/prev_nav)*100:.2f}%)")
+
+                # Area Chart for Mutual Funds
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=hist.index, y=hist['Close'], mode='lines', fill='tozeroy', line=dict(color='#1E88E5'), name='NAV'))
+                fig.update_layout(template="plotly_white", margin=dict(t=10, b=10, l=10, r=10), height=400, yaxis_title="Net Asset Value (₹)")
+                st.plotly_chart(fig, use_container_width=True)
+
+                st.info("💡 **Pro Tip:** Mutual Fund NAVs are calculated only once a day at the end of the trading session (usually updated around 9 PM - 11 PM IST).")
+            else:
+                st.error("⚠️ Data not available for this Mutual Fund right now.")
 
 # --- 5. HOME PAGE (Screener + Finology UI) ---
 elif st.session_state.current_view == "HOME":
@@ -419,3 +461,4 @@ else:
             st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+
