@@ -1,8 +1,8 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots  # Nayi line add ho gayi yahan!
 import urllib.parse
-from plotly.subplots import make_subplots
 import urllib.request
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -252,11 +252,90 @@ else:
         
         tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["📊 Price Chart", "📋 Pro Ratios & Whales", "📑 Financials (In Cr)", "🏢 Corp Actions", "📰 Live News", "💎 AI Quant", "📥 Export"])
 
+        # --- YAHAN SE UPDATED CHART CODE HAI ---
         with tab1:
-            fig = go.Figure(data=[go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'])])
-            fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], line=dict(color='orange'), name='50 SMA'))
-            fig.update_layout(template="plotly_white", margin=dict(t=10, b=10, l=10, r=10), height=500, xaxis_rangeslider_visible=False)
+            st.markdown("### 📊 Advanced Technical Chart")
+            
+            # --- 1. CALCULATE INDICATORS ---
+            # Bollinger Bands (20-day)
+            data['20SMA'] = data['Close'].rolling(20).mean()
+            data['Upper_BB'] = data['20SMA'] + 2 * data['Close'].rolling(20).std()
+            data['Lower_BB'] = data['20SMA'] - 2 * data['Close'].rolling(20).std()
+            
+            # RSI (14-day)
+            delta = data['Close'].diff()
+            up = delta.clip(lower=0)
+            down = -1 * delta.clip(upper=0)
+            ema_up = up.ewm(com=13, adjust=False).mean()
+            ema_down = down.ewm(com=13, adjust=False).mean()
+            data['RSI'] = 100 - (100 / (1 + (ema_up / ema_down)))
+            
+            # MACD
+            exp1 = data['Close'].ewm(span=12, adjust=False).mean()
+            exp2 = data['Close'].ewm(span=26, adjust=False).mean()
+            data['MACD'] = exp1 - exp2
+            data['Signal Line'] = data['MACD'].ewm(span=9, adjust=False).mean()
+
+            # --- 2. USER CONTROLS ---
+            indicators = st.multiselect(
+                "Overlay Technical Indicators:",
+                ["50 SMA", "200 SMA", "Bollinger Bands", "RSI (14)", "MACD"],
+                default=["50 SMA"]
+            )
+
+            # --- 3. DYNAMIC PLOTLY CHART BUILDER ---
+            # Determine how many rows we need based on selected sub-charts
+            has_rsi = "RSI (14)" in indicators
+            has_macd = "MACD" in indicators
+            
+            rows = 1 + int(has_rsi) + int(has_macd)
+            row_heights = [0.6] + [0.2] * (rows - 1) if rows > 1 else [1]
+            
+            fig = make_subplots(rows=rows, cols=1, shared_xaxes=True, 
+                                vertical_spacing=0.05, row_heights=row_heights)
+
+            # Main Price Chart (Row 1)
+            fig.add_trace(go.Candlestick(x=data.index, open=data['Open'], high=data['High'], 
+                                         low=data['Low'], close=data['Close'], name="Price"), row=1, col=1)
+            
+            # Overlays
+            if "50 SMA" in indicators:
+                fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], line=dict(color='orange', width=1.5), name='50 SMA'), row=1, col=1)
+            
+            if "200 SMA" in indicators:
+                data['SMA200'] = data['Close'].rolling(200).mean()
+                fig.add_trace(go.Scatter(x=data.index, y=data['SMA200'], line=dict(color='blue', width=1.5), name='200 SMA'), row=1, col=1)
+                
+            if "Bollinger Bands" in indicators:
+                fig.add_trace(go.Scatter(x=data.index, y=data['Upper_BB'], line=dict(color='gray', dash='dash'), name='Upper BB'), row=1, col=1)
+                fig.add_trace(go.Scatter(x=data.index, y=data['Lower_BB'], line=dict(color='gray', dash='dash'), fill='tonexty', fillcolor='rgba(128,128,128,0.1)', name='Lower BB'), row=1, col=1)
+
+            current_row = 2
+            
+            # RSI Subplot
+            if has_rsi:
+                fig.add_trace(go.Scatter(x=data.index, y=data['RSI'], line=dict(color='purple', width=1.5), name='RSI'), row=current_row, col=1)
+                fig.add_hline(y=70, line_dash="dot", line_color="red", row=current_row, col=1) # Overbought line
+                fig.add_hline(y=30, line_dash="dot", line_color="green", row=current_row, col=1) # Oversold line
+                fig.update_yaxes(title_text="RSI", row=current_row, col=1, range=[0, 100])
+                current_row += 1
+
+            # MACD Subplot
+            if has_macd:
+                fig.add_trace(go.Scatter(x=data.index, y=data['MACD'], line=dict(color='blue', width=1.5), name='MACD'), row=current_row, col=1)
+                fig.add_trace(go.Scatter(x=data.index, y=data['Signal Line'], line=dict(color='orange', width=1.5), name='Signal'), row=current_row, col=1)
+                
+                # MACD Histogram (Green for positive momentum, Red for negative)
+                colors = ['green' if val >= 0 else 'red' for val in (data['MACD'] - data['Signal Line'])]
+                fig.add_trace(go.Bar(x=data.index, y=(data['MACD'] - data['Signal Line']), marker_color=colors, name='Histogram'), row=current_row, col=1)
+                fig.update_yaxes(title_text="MACD", row=current_row, col=1)
+
+            # Final Polish
+            fig.update_layout(template="plotly_white", margin=dict(t=10, b=10, l=10, r=10), 
+                              height=700 if rows > 1 else 500, xaxis_rangeslider_visible=False)
+            
             st.plotly_chart(fig, use_container_width=True)
+        # --- YAHAN TAK UPDATED CHART CODE HAI ---
 
         with tab2:
             st.markdown("### 📈 Comprehensive Financial Metrics")
@@ -340,4 +419,3 @@ else:
             st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
-
