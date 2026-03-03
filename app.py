@@ -13,36 +13,27 @@ st.set_page_config(page_title="Dixit Investment Group | Screener", layout="wide"
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity"])
 
-# --- PREMIUM CSS (Fixing Button Wrapping & Layouts) ---
+# --- PREMIUM CSS ---
 st.markdown("""
     <style>
-    /* Center aligning main content */
     .block-container { padding-top: 0rem; padding-bottom: 2rem; max-width: 1200px; }
-    
-    /* FIX: Prevent Button Text Wrapping */
     div[data-testid="stButton"] button {
         white-space: nowrap !important;
         border-radius: 8px !important;
         padding-left: 5px !important;
         padding-right: 5px !important;
     }
-    div[data-testid="stButton"] button p {
-        font-size: 14px !important;
-    }
-
-    /* Screener Headers */
+    div[data-testid="stButton"] button p { font-size: 14px !important; }
     .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: sans-serif;}
     .sub-title { text-align: center; color: #555; font-size: 1.2rem; font-weight: 600; margin-top: 5px; margin-bottom: 30px; }
-    
     a { text-decoration: none !important; color: inherit !important; }
     th { text-align: left !important; background-color: rgba(150, 150, 150, 0.1); }
     </style>
 """, unsafe_allow_html=True)
 
-# --- HELPER FUNCTIONS FOR INDIAN FORMATTING ---
+# --- HELPER FUNCTIONS ---
 def format_inr(number):
-    if pd.isna(number) or number is None: 
-        return "N/A"
+    if pd.isna(number) or number is None: return "N/A"
     try:
         is_negative = number < 0
         number = abs(number)
@@ -50,22 +41,16 @@ def format_inr(number):
         r = ",".join([s[x-2:x] for x in range(-3, -len(s), -2)][::-1] + [s[-3:]])
         formatted_num = "".join([r] + d) if r else s
         return f"-{formatted_num}" if is_negative else formatted_num
-    except: 
-        return str(number)
+    except: return str(number)
 
 def format_large_number(number):
-    if pd.isna(number) or number is None:
-        return "N/A"
+    if pd.isna(number) or number is None: return "N/A"
     try:
         num = float(number)
-        if num >= 10000000:  
-            return f"{format_inr(round(num / 10000000, 2))} Cr"
-        elif num >= 100000:  
-            return f"{format_inr(round(num / 100000, 2))} L"
-        else:
-            return format_inr(num)
-    except:
-        return str(number)
+        if num >= 10000000: return f"{format_inr(round(num / 10000000, 2))} Cr"
+        elif num >= 100000: return f"{format_inr(round(num / 100000, 2))} L"
+        else: return format_inr(num)
+    except: return str(number)
 
 def format_df_to_crores(df):
     if df is None or df.empty: return df
@@ -75,6 +60,14 @@ def format_df_to_crores(df):
         formatted[col] = formatted[col].apply(lambda x: f"{format_inr(round(x / 10000000, 2))}" if pd.notna(x) else "N/A")
     formatted.columns = [str(c).split(' ')[0] for c in formatted.columns]
     return formatted
+
+# --- YAHOO FINANCE ANTI-CRASH CACHE ---
+@st.cache_data(ttl=3600)
+def fetch_safe_info(ticker_symbol):
+    try:
+        return yf.Ticker(ticker_symbol).info
+    except Exception:
+        return {} # Returns empty dict if Yahoo blocks the request
 
 # --- 2. TOP MARKET BAR ---
 @st.cache_data(ttl=300)
@@ -137,7 +130,7 @@ if st.session_state.current_view == "COMPARE":
     with c2: t2 = st.selectbox("Select Asset 2:", list(TOP_STOCKS.keys()), index=2)
     
     if st.button("Run Comparison 🚀", type="primary"):
-        i1, i2 = yf.Ticker(t1).info, yf.Ticker(t2).info
+        i1, i2 = fetch_safe_info(t1), fetch_safe_info(t2)
         comp_data = {
             "Metric": ["Price (₹)", "P/E Ratio", "P/B Ratio", "ROE (%)", "Debt to Equity", "Market Cap"],
             TOP_STOCKS[t1]: [
@@ -180,7 +173,10 @@ elif st.session_state.current_view == "MUTUAL_FUNDS":
     if st.button("Fetch NAV & Chart 🚀", type="primary"):
         with st.spinner("Fetching latest NAV..."):
             mf_data = yf.Ticker(mf_ticker)
-            hist = mf_data.history(period="1y")
+            try:
+                hist = mf_data.history(period="1y")
+            except:
+                hist = pd.DataFrame()
 
             if not hist.empty:
                 current_nav = hist['Close'].iloc[-1]
@@ -201,7 +197,6 @@ elif st.session_state.current_view == "MUTUAL_FUNDS":
 
 # --- 5. HOME PAGE ---
 elif st.session_state.current_view == "HOME":
-    
     st.markdown('<h1 class="main-title">Dixit Investment Group</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">The Modern Stock Screener that helps you pick better stocks.</p>', unsafe_allow_html=True)
     
@@ -267,14 +262,6 @@ elif st.session_state.current_view == "HOME":
             st.dataframe(display_df, use_container_width=True)
 
 # --- 6. STOCK ANALYSIS ENGINE ---
-
-# NAYA FUNCTION: Data ko 1 ghante (3600 sec) ke liye cache karega aur crash hone se bachayega
-@st.cache_data(ttl=3600)
-def fetch_safe_info(ticker_symbol):
-    try:
-        return yf.Ticker(ticker_symbol).info
-    except Exception as e:
-        return {} # Agar Yahoo block kare toh khali dict bhej de, app crash na ho
 else:
     user_ticker = st.session_state.current_view
     
@@ -283,13 +270,11 @@ else:
     
     t_obj = yf.Ticker(user_ticker)
     
-    # Try-except for historical data as well just to be safe on cloud
     try:
         data = t_obj.history(period="1y")
     except:
-        data = pd.DataFrame() # Empty dataframe if failed
-
-    # Yahan humne purana t_obj.info hata kar naya safe function lagaya hai
+        data = pd.DataFrame()
+        
     info = fetch_safe_info(user_ticker)
     display_name = info.get('shortName', user_ticker.replace('.NS', ''))
 
@@ -489,5 +474,3 @@ else:
             st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
-
-
