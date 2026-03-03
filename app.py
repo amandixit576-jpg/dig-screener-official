@@ -13,7 +13,7 @@ st.set_page_config(page_title="Dixit Investment Group | Screener", layout="wide"
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity", "Hold Type"])
 
-# --- PREMIUM CSS ---
+# --- PREMIUM CSS & TAGLINE STYLING ---
 st.markdown("""
     <style>
     .block-container { padding-top: 0rem; padding-bottom: 2rem; max-width: 1200px; }
@@ -25,8 +25,11 @@ st.markdown("""
     }
     div[data-testid="stButton"] button p { font-size: 14px !important; }
     .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: 'Arial Black', sans-serif; letter-spacing: -1px;}
+    
+    /* YAHAN AAPKI TAGLINE STYLING HAI */
     .sub-title { text-align: center; color: #E5A91E; font-size: 1.2rem; font-weight: 700; margin-top: 0px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;}
     .tag-line { text-align: center; color: #666; font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic;}
+    
     a { text-decoration: none !important; color: inherit !important; }
     th { text-align: left !important; background-color: rgba(150, 150, 150, 0.1); }
     /* Thematic Basket Cards */
@@ -202,7 +205,7 @@ elif st.session_state.current_view == "BASKETS":
     st.write("")
     b4, b5, b6 = st.columns(3)
     with b4:
-        st.markdown('<div class="basket-card"><div class="basket-title">🍃 Ethical & Cruelty-Free</div><p>Pure vegetarian FMCG (Tata Consumer, Patanjali)</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="basket-card"><div class="basket-title">🍃 Ethical & Cruelty-Free</div><p>Pure vegetarian FMCG & mindful brands (Tata Consumer, Patanjali)</p></div>', unsafe_allow_html=True)
         if st.button("Analyze Ethical Basket", key="b_ethical", use_container_width=True): st.session_state.current_view = "TATACONSUM.NS"; st.rerun()
     with b5:
         st.markdown('<div class="basket-card"><div class="basket-title">💻 Tech & Innovation</div><p>IT Giants shaping the future (TCS, HCLTech)</p></div>', unsafe_allow_html=True)
@@ -282,11 +285,10 @@ elif st.session_state.current_view == "HOME":
             df_port["Current Value"] = df_port["Live Price"] * df_port["Quantity"]
             df_port["Gross P&L (₹)"] = df_port["Current Value"] - df_port["Total Invested"]
             
-            # --- ADVANCED TAX AUDIT LOGIC ---
             def calc_tax(row):
                 if row["Gross P&L (₹)"] <= 0: return 0
-                if "Short-Term" in row["Hold Type"]: return row["Gross P&L (₹)"] * 0.20 # 20% STCG
-                else: return row["Gross P&L (₹)"] * 0.125 # 12.5% LTCG (Exemption logic simplified)
+                if "Short-Term" in row["Hold Type"]: return row["Gross P&L (₹)"] * 0.20 
+                else: return row["Gross P&L (₹)"] * 0.125 
                 
             df_port["Est. Tax Liability"] = df_port.apply(calc_tax, axis=1)
             df_port["Net Post-Tax P&L"] = df_port["Gross P&L (₹)"] - df_port["Est. Tax Liability"]
@@ -431,8 +433,6 @@ else:
 
         with tab5:
             st.markdown("### 📰 Live Market News & AI Sentiment")
-            
-            # Simulated AI Sentiment based on moving average
             sma_trend = data['SMA50'].iloc[-1]
             if curr_price > sma_trend:
                 st.success("🤖 **AI Sentiment Radar:** The current market sentiment for this asset leans **BULLISH** based on prevailing momentum indices.")
@@ -485,7 +485,6 @@ else:
             st.markdown("### 📸 Influencer Content Dashboard")
             st.write("Generate ready-to-post scripts and branded reports for your social media audience.")
             
-            # --- Auto Script Generator ---
             pe_val = info.get('trailingPE', 0)
             trend_text = "bullish breakout territory" if curr_price > data['SMA50'].iloc[-1] else "a solid accumulation zone"
             val_text = "undervalued compared to historical peers" if (pe_val > 0 and pe_val < 25) else "trading at a premium, demanding caution"
