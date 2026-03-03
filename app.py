@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 
 # --- 1. PAGE SETUP & MEMORY ---
-st.set_page_config(page_title="Dixit Capital | The Investing Engine", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Aman's Pro Terminal | Dixit Capital", layout="wide", initial_sidebar_state="collapsed")
 
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity"])
@@ -29,13 +29,25 @@ def premium_signup():
     name = st.text_input("Full Name")
     city = st.text_input("City")
     if name and city:
-        raw_message = f"Hello Dixit Capital! 📈\n\nI want to purchase the Premium Access Code.\nName: {name}\nCity: {city}"
+        raw_message = f"Hello Aman! 📈\n\nI visited Dixit Capital and want to purchase the Premium Access Code.\nName: {name}\nCity: {city}"
         whatsapp_url = f"https://wa.me/{YOUR_WHATSAPP_NUMBER}?text={urllib.parse.quote(raw_message)}"
-        st.link_button("📲 Chat to get Code", whatsapp_url, type="primary", use_container_width=True)
+        st.link_button("📲 Message Aman for Access", whatsapp_url, type="primary", use_container_width=True)
     else:
-        st.button("📲 Chat to get Code", type="primary", disabled=True, use_container_width=True)
+        st.button("📲 Message Aman for Access", type="primary", disabled=True, use_container_width=True)
 
-# --- 3. TOP MARKET BAR ---
+# --- 3. CLICKABLE BRANDING (FOUNDER'S EDITION) ---
+st.markdown("""
+    <div style='text-align: center; padding: 10px;'>
+        <a href="/" target="_self">
+            <h1 style='color: #1E88E5; font-family: "Arial Black", sans-serif; cursor: pointer; margin-bottom: 0px;'>🏢 Dixit Capital</h1>
+        </a>
+        <p style='font-weight: bold; color: #444; font-size: 18px; margin-top: 5px;'>A Premium Wealth Terminal by Aman Dixit</p>
+        <p style='font-style: italic; color: #888888; font-size: 15px;'>Advanced Quantitative Analysis & Portfolio Tracking</p>
+    </div>
+    <hr>
+""", unsafe_allow_html=True)
+
+# --- 4. TOP MARKET BAR ---
 @st.cache_data(ttl=300)
 def get_index_data(ticker):
     try: return yf.Ticker(ticker).history(period="2d")
@@ -58,7 +70,7 @@ st.write("---")
 
 TOP_STOCKS = {"RELIANCE.NS": "Reliance", "TCS.NS": "TCS", "HDFCBANK.NS": "HDFC Bank", "INFY.NS": "Infosys", "ZOMATO.NS": "Zomato", "ITC.NS": "ITC", "SBIN.NS": "SBI"}
 
-# --- 4. SIDEBAR MENU ---
+# --- 5. SIDEBAR MENU ---
 st.sidebar.header("⚙️ Main Menu")
 if st.sidebar.button("🏠 Home Dashboard", use_container_width=True): st.session_state.current_view = "HOME"; st.rerun()
 if st.sidebar.button("⚖️ Peer Comparison", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
@@ -74,7 +86,7 @@ def get_live_news(company_name):
         return [{'title': i.find('title').text.rsplit(' - ', 1)[0] if ' - ' in i.find('title').text else i.find('title').text, 'link': i.find('link').text, 'date': i.find('pubDate').text[5:16]} for i in root.findall('.//item')[:4]]
     except: return []
 
-# --- 5. PEER COMPARISON VIEW ---
+# --- 6. PEER COMPARISON VIEW ---
 if st.session_state.current_view == "COMPARE":
     st.markdown("<h3 style='text-align: center;'>⚖️ Peer-to-Peer Asset Comparison</h3>", unsafe_allow_html=True)
     if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
@@ -92,12 +104,12 @@ if st.session_state.current_view == "COMPARE":
         }
         st.table(pd.DataFrame(comp_data).set_index("Metric"))
 
-# --- 6. HOME PAGE (Search, Trending, Calc, Portfolio) ---
+# --- 7. HOME PAGE (Search, Trending, Calc, Portfolio) ---
 elif st.session_state.current_view == "HOME":
     
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; color: #1E88E5; font-size: 3.5rem;'>Investing Ka Search Engine</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #555;'>The Modern CA Terminal that helps you pick better stocks.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1E88E5; font-size: 3.5rem;'>Aman's Pro Terminal</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #555;'>Institutional-Grade Market Screening & Auditing</p>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -154,7 +166,7 @@ elif st.session_state.current_view == "HOME":
             df_port["P&L (₹)"] = df_port["Current Value"] - df_port["Total Invested"]
             st.dataframe(df_port, use_container_width=True)
 
-# --- 7. STOCK ANALYSIS ENGINE (All 7 Super Tabs) ---
+# --- 8. STOCK ANALYSIS ENGINE (All 7 Super Tabs) ---
 else:
     user_ticker = st.session_state.current_view
     if st.button("⬅️ Back to Home Search"): st.session_state.current_view = "HOME"; st.rerun()
@@ -173,7 +185,7 @@ else:
 
         data['SMA50'] = data['Close'].rolling(50).mean()
         
-        # ALL 7 TABS RESTORED
+        # ALL 7 TABS
         tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["📊 Price Chart", "📋 Ratios & Whales", "📑 Financials", "🏢 Corp Actions", "📰 Live News", "💎 AI Quant", "📥 Export"])
 
         with tab1:
