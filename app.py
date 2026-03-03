@@ -12,54 +12,29 @@ st.set_page_config(page_title="Dixit Investment Group | Screener", layout="wide"
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity"])
 
-# --- PREMIUM CSS (Screener & Finology Look) ---
+# --- PREMIUM CSS (Fixing Button Wrapping & Layouts) ---
 st.markdown("""
     <style>
-    /* Clean Background */
-    .stApp { background-color: #F8FAFC; }
-    
     /* Center aligning main content */
-    .block-container { padding-top: 0rem; padding-bottom: 2rem; max-width: 1200px; }
+    .block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1200px; }
     
-    /* Finology Top Bar */
-    .top-strip {
-        background-color: #EFF6FF;
-        padding: 8px 0px;
-        border-bottom: 2px solid #DBEAFE;
-        display: flex;
-        justify-content: space-around;
-        margin-left: -5rem;
-        margin-right: -5rem;
-        margin-bottom: 3rem;
-    }
-    
-    /* Prevent Button Text Wrapping (The Fix for RELIANC E) */
+    /* FIX: Prevent Button Text Wrapping (Stops RELIANC E) */
     div[data-testid="stButton"] button {
         white-space: nowrap !important;
-        border-radius: 20px !important; /* Pill shape */
-        border: 1px solid #CBD5E1 !important;
-        background-color: #FFFFFF !important;
-        color: #334155 !important;
-        font-weight: 600 !important;
-        padding: 5px 15px !important;
-    }
-    div[data-testid="stButton"] button:hover {
-        border-color: #3B82F6 !important;
-        color: #3B82F6 !important;
-        background-color: #F8FAFC !important;
-    }
-    
-    /* Primary Button override (Search button) */
-    div[data-testid="stButton"] button[data-baseweb="button"]:first-child {
         border-radius: 8px !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+    div[data-testid="stButton"] button p {
+        font-size: 14px !important;
     }
 
     /* Screener Headers */
-    .main-title { text-align: center; color: #1E293B; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: sans-serif;}
-    .sub-title { text-align: center; color: #3B82F6; font-size: 1.3rem; font-weight: 600; margin-top: 5px; margin-bottom: 40px; }
+    .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: sans-serif;}
+    .sub-title { text-align: center; color: #555; font-size: 1.2rem; font-weight: 600; margin-top: 5px; margin-bottom: 30px; }
     
     a { text-decoration: none !important; color: inherit !important; }
-    th { text-align: left !important; background-color: #f4f6f9; }
+    th { text-align: left !important; background-color: rgba(150, 150, 150, 0.1); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -81,7 +56,7 @@ def format_df_to_crores(df):
     formatted.columns = [str(c).split(' ')[0] for c in formatted.columns]
     return formatted
 
-# --- 2. TOP MARKET BAR (Finology Style) ---
+# --- 2. TOP MARKET BAR (Native Stable Streamlit) ---
 @st.cache_data(ttl=300)
 def get_index_data(ticker):
     try: return yf.Ticker(ticker).history(period="2d")
@@ -89,24 +64,21 @@ def get_index_data(ticker):
 
 nifty, sensex, banknifty = get_index_data("^NSEI"), get_index_data("^BSESN"), get_index_data("^NSEBANK")
 
-def format_idx_html(name, data):
+def display_index(col, name, data):
     if data is not None and len(data) >= 2:
         curr, prev = data['Close'].iloc[-1], data['Close'].iloc[-2]
         chg, pct = curr - prev, ((curr - prev)/prev)*100
         color = "#16A34A" if chg >= 0 else "#DC2626"
         sign = "+" if chg >= 0 else ""
-        return f"<span style='font-size: 13px; font-weight: bold; color: #1E3A8A;'>{name} <span style='background-color: #3B82F6; color: white; padding: 2px 6px; border-radius: 4px; margin: 0 4px;'>{format_inr(round(curr, 2))}</span> <span style='color: {color};'>{sign}{round(chg, 2)} ({sign}{pct:.2f}%)</span></span>"
-    return ""
+        # Using Streamlit's native markdown for 100% stability across Light/Dark modes
+        col.markdown(f"**{name}**: ₹{format_inr(round(curr, 2))} <span style='color:{color}; font-weight:bold;'>({sign}{pct:.2f}%)</span>", unsafe_allow_html=True)
 
-# Injecting the top bar HTML
-st.markdown(f"""
-    <div class="top-strip">
-        {format_idx_html("SENSEX", sensex)}
-        {format_idx_html("NIFTY 50", nifty)}
-        {format_idx_html("BANKNIFTY", banknifty)}
-    </div>
-""", unsafe_allow_html=True)
-
+# Using native columns so it NEVER disappears
+top1, top2, top3, top4 = st.columns([1, 2, 2, 2])
+display_index(top2, "SENSEX", sensex)
+display_index(top3, "NIFTY 50", nifty)
+display_index(top4, "BANKNIFTY", banknifty)
+st.write("---")
 
 # --- 3. LEAD GENERATION & SIDEBAR ---
 TOP_STOCKS = {"RELIANCE.NS": "Reliance", "TCS.NS": "TCS", "HDFCBANK.NS": "HDFC Bank", "INFY.NS": "Infosys", "ZOMATO.NS": "Zomato", "ITC.NS": "ITC", "SBIN.NS": "SBI"}
@@ -136,7 +108,7 @@ def get_live_news(company_name):
 
 # --- 4. PEER COMPARISON VIEW ---
 if st.session_state.current_view == "COMPARE":
-    st.markdown("<h2 style='color:#1E293B;'>⚖️ Peer-to-Peer Asset Comparison</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#1E88E5;'>⚖️ Peer-to-Peer Asset Comparison</h2>", unsafe_allow_html=True)
     if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
     st.write("---")
     
@@ -173,11 +145,12 @@ elif st.session_state.current_view == "HOME":
         col_t1.markdown("**What's Trending:**")
         with col_t2:
             t1, t2, t3, t4, t5 = st.columns(5)
-            if t1.button("RELIANCE"): st.session_state.current_view = "RELIANCE.NS"; st.rerun()
-            if t2.button("HDFCBANK"): st.session_state.current_view = "HDFCBANK.NS"; st.rerun()
-            if t3.button("ZOMATO"): st.session_state.current_view = "ZOMATO.NS"; st.rerun()
-            if t4.button("TCS"): st.session_state.current_view = "TCS.NS"; st.rerun()
-            if t5.button("ITC"): st.session_state.current_view = "ITC.NS"; st.rerun()
+            # The CSS above will prevent these texts from wrapping
+            if t1.button("RELIANCE", use_container_width=True): st.session_state.current_view = "RELIANCE.NS"; st.rerun()
+            if t2.button("HDFCBANK", use_container_width=True): st.session_state.current_view = "HDFCBANK.NS"; st.rerun()
+            if t3.button("ZOMATO", use_container_width=True): st.session_state.current_view = "ZOMATO.NS"; st.rerun()
+            if t4.button("TCS", use_container_width=True): st.session_state.current_view = "TCS.NS"; st.rerun()
+            if t5.button("ITC", use_container_width=True): st.session_state.current_view = "ITC.NS"; st.rerun()
 
     st.write("---")
     
@@ -232,7 +205,7 @@ else:
         curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
         
         c1, c2 = st.columns([3, 1])
-        c1.markdown(f"<h1 style='color: #1E293B;'>{display_name}</h1>", unsafe_allow_html=True)
+        c1.markdown(f"<h1 style='color: #1E88E5; margin-bottom: 0px;'>{display_name}</h1>", unsafe_allow_html=True)
         c2.metric("Current Price", f"₹{format_inr(round(curr_price, 2))}", f"{(curr_price - prev_price):.2f} ({((curr_price - prev_price)/prev_price)*100:.2f}%)")
 
         data['SMA50'] = data['Close'].rolling(50).mean()
@@ -242,7 +215,9 @@ else:
         with tab1:
             fig = go.Figure(data=[go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'])])
             fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], line=dict(color='orange'), name='50 SMA'))
-            fig.update_layout(template="plotly_white", margin=dict(t=10, b=10, l=10, r=10), height=500, xaxis_rangeslider_visible=False)
+            
+            # This makes the chart adapt to Light/Dark mode automatically!
+            fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=500, xaxis_rangeslider_visible=False)
             st.plotly_chart(fig, use_container_width=True)
 
         with tab2:
