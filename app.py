@@ -150,3 +150,99 @@ elif st.session_state.current_view == "HOME":
             df_port = st.session_state.portfolio.copy()
             df_port["Live Price"] = [yf.Ticker(t).history(period="1d")['Close'].iloc[-1] if not yf.Ticker(t).history(period="1d").empty else 0 for t in df_port["Ticker"]]
             df_port["Total Invested"] = df_port["Buy Price"] * df_port["Quantity"]
+            df_port["Current Value"] = df_port["Live Price"] * df_port["Quantity"]
+            df_port["P&L (₹)"] = df_port["Current Value"] - df_port["Total Invested"]
+            st.dataframe(df_port, use_container_width=True)
+
+# --- 7. STOCK ANALYSIS ENGINE (All 7 Super Tabs) ---
+else:
+    user_ticker = st.session_state.current_view
+    if st.button("⬅️ Back to Home Search"): st.session_state.current_view = "HOME"; st.rerun()
+    
+    t_obj = yf.Ticker(user_ticker)
+    data = t_obj.history(period="1y")
+    info = t_obj.info
+    display_name = info.get('shortName', user_ticker.replace('.NS', ''))
+
+    if data is not None and not data.empty:
+        curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
+        
+        c1, c2 = st.columns([3, 1])
+        c1.markdown(f"<h1 style='color:#1E88E5;'>{display_name}</h1>", unsafe_allow_html=True)
+        c2.metric("Current Price", f"₹{curr_price:.2f}", f"{(curr_price - prev_price):.2f} ({((curr_price - prev_price)/prev_price)*100:.2f}%)")
+
+        data['SMA50'] = data['Close'].rolling(50).mean()
+        
+        # ALL 7 TABS RESTORED
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["📊 Price Chart", "📋 Ratios & Whales", "📑 Financials", "🏢 Corp Actions", "📰 Live News", "💎 AI Quant", "📥 Export"])
+
+        with tab1:
+            fig = go.Figure(data=[go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'])])
+            fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], line=dict(color='orange'), name='50 SMA'))
+            fig.update_layout(template="plotly_white", margin=dict(t=10, b=10, l=10, r=10), height=500, xaxis_rangeslider_visible=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+        with tab2:
+            st.markdown("### Key Metrics")
+            f1, f2, f3, f4 = st.columns(4)
+            f1.metric("Market Cap (Cr)", f"₹{round(info.get('marketCap', 0)/10000000, 2)}" if info.get('marketCap') else "N/A")
+            f2.metric("P/E Ratio", round(info.get('trailingPE', 0), 2) if info.get('trailingPE') else "N/A")
+            f3.metric("ROE", f"{round(info.get('returnOnEquity', 0)*100, 2)}%" if info.get('returnOnEquity') else "N/A")
+            f4.metric("Debt/Equity", round(info.get('debtToEquity', 0), 2) if info.get('debtToEquity') else "N/A")
+            
+            st.write("---")
+            st.markdown("### 🐋 Shareholding Pattern")
+            insider = round(info.get('heldPercentInsiders', 0) * 100, 2)
+            inst = round(info.get('heldPercentInstitutions', 0) * 100, 2)
+            st.write(f"**Promoters:** {insider}% | **Institutions (FII/DII):** {inst}% | **Public:** {100 - insider - inst}%")
+
+        with tab3:
+            st.markdown("### 📑 Annual Financial Statements")
+            stmt1, stmt2 = st.tabs(["Income Statement", "Balance Sheet"])
+            with stmt1:
+                try:
+                    fin_df = t_obj.financials
+                    if not fin_df.empty: st.dataframe(fin_df.dropna(how='all'), use_container_width=True)
+                    else: st.warning("Income Statement data not available.")
+                except: st.warning("Error fetching Income Statement.")
+            with stmt2:
+                try:
+                    bs_df = t_obj.balance_sheet
+                    if not bs_df.empty: st.dataframe(bs_df.dropna(how='all'), use_container_width=True)
+                    else: st.warning("Balance Sheet data not available.")
+                except: st.warning("Error fetching Balance Sheet.")
+
+        with tab4:
+            st.markdown("### 📅 Recent Dividends & Corporate Actions")
+            try:
+                divs = t_obj.dividends.tail(5)
+                if not divs.empty: st.write(divs)
+                else: st.info("No recent dividend data found.")
+            except: st.warning("Corporate action data unavailable.")
+
+        with tab5:
+            st.markdown("### 📰 Live Market News")
+            live_news = get_live_news(display_name)
+            if live_news:
+                for n in live_news:
+                    st.markdown(f"🔹 **[{n['title']}]({n['link']})**")
+                    st.caption(f"🕒 {n['date']}")
+                    st.divider()
+            else: st.info("No recent news found.")
+
+        with tab6:
+            entered_code = st.text_input("🔑 Enter Premium Access Code:", type="password")
+            if entered_code == "AMANPRO":
+                st.success("🔓 Algorithm Running...")
+                pe = info.get('trailingPE', 0)
+                if pe > 0 and pe < 20: st.success("✅ **Verdict: STRONG BUY** (Undervalued: Trading at discount).")
+                elif pe >= 20 and pe < 40: st.info("⚖️ **Verdict: HOLD / SIP** (Fairly Valued: Normal pricing).")
+                else: st.warning("⚠️ **Verdict: CAUTION** (Overpriced: High premium).")
+            elif entered_code: st.error("❌ Invalid Code.")
+
+        with tab7:
+            st.markdown("### 📥 Download Institutional Report")
+            report_df = pd.DataFrame({"Metric": ["Company", "Price", "P/E", "ROE", "Debt/Eq"], "Value": [display_name, curr_price, info.get('trailingPE'), info.get('returnOnEquity'), info.get('debtToEquity')]})
+            st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
+
+    else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
