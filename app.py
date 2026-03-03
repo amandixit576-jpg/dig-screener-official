@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
 import urllib.parse
+from plotly.subplots import make_subplots
 import urllib.request
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -339,3 +340,4 @@ else:
             st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+
