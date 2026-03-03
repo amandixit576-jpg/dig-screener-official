@@ -12,12 +12,12 @@ st.set_page_config(page_title="Dixit Capital | The Investing Engine", layout="wi
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity"])
 
-# Finology/Screener like Clean CSS
+# Clean CSS
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 2rem; }
     hr { margin-top: 1rem; margin-bottom: 1.5rem; border-color: #e0e0e0; }
-    .stButton>button { border-radius: 20px; } /* Rounded buttons like pills */
+    a { text-decoration: none !important; color: inherit !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -35,15 +35,13 @@ def premium_signup():
     else:
         st.button("📲 Chat to get Code", type="primary", disabled=True, use_container_width=True)
 
-# --- 3. TOP MARKET BAR (Like Finology) ---
+# --- 3. TOP MARKET BAR ---
 @st.cache_data(ttl=300)
 def get_index_data(ticker):
     try: return yf.Ticker(ticker).history(period="2d")
     except: return None
 
-nifty = get_index_data("^NSEI")
-sensex = get_index_data("^BSESN")
-banknifty = get_index_data("^NSEBANK")
+nifty, sensex, banknifty = get_index_data("^NSEI"), get_index_data("^BSESN"), get_index_data("^NSEBANK")
 
 m1, m2, m3, m4, m5, m6 = st.columns(6)
 def display_index(col, name, data):
@@ -58,7 +56,7 @@ display_index(m3, "NIFTY 50", nifty)
 display_index(m4, "BANKNIFTY", banknifty)
 st.write("---")
 
-TOP_STOCKS = {"RELIANCE.NS": "Reliance", "TCS.NS": "TCS", "HDFCBANK.NS": "HDFC Bank", "INFY.NS": "Infosys", "ZOMATO.NS": "Zomato", "ITC.NS": "ITC"}
+TOP_STOCKS = {"RELIANCE.NS": "Reliance", "TCS.NS": "TCS", "HDFCBANK.NS": "HDFC Bank", "INFY.NS": "Infosys", "ZOMATO.NS": "Zomato", "ITC.NS": "ITC", "SBIN.NS": "SBI"}
 
 # --- 4. SIDEBAR MENU ---
 st.sidebar.header("⚙️ Main Menu")
@@ -94,7 +92,7 @@ if st.session_state.current_view == "COMPARE":
         }
         st.table(pd.DataFrame(comp_data).set_index("Metric"))
 
-# --- 6. HOME PAGE (The Screener/Finology Engine Look) ---
+# --- 6. HOME PAGE (Search, Trending, Calc, Portfolio) ---
 elif st.session_state.current_view == "HOME":
     
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -104,7 +102,6 @@ elif st.session_state.current_view == "HOME":
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # Search Box
         man_t = st.text_input("🔍 Type a Company Name or NSE Symbol (e.g., ITC)", placeholder="Search for a company...")
         if st.button("Run Fundamental Audit", type="primary", use_container_width=True):
             if man_t:
@@ -112,7 +109,6 @@ elif st.session_state.current_view == "HOME":
                 st.rerun()
         
         st.markdown("<br>", unsafe_allow_html=True)
-        # Trending Pills (Like Finology)
         st.markdown("<p style='text-align: center; font-weight: bold;'>What's Trending:</p>", unsafe_allow_html=True)
         t1, t2, t3, t4, t5 = st.columns(5)
         if t1.button("RELIANCE", use_container_width=True): st.session_state.current_view = "RELIANCE.NS"; st.rerun()
@@ -123,8 +119,7 @@ elif st.session_state.current_view == "HOME":
 
     st.write("---")
     
-    # Portfolio & Calculator Layout
-    ht1, ht2 = st.tabs(["💰 SIP Calculator", "💼 Virtual Portfolio"])
+    ht1, ht2 = st.tabs(["💰 SIP Wealth Calculator", "💼 My Virtual Portfolio"])
     with ht1:
         calc_col1, calc_col2 = st.columns([1, 2])
         with calc_col1:
@@ -155,86 +150,3 @@ elif st.session_state.current_view == "HOME":
             df_port = st.session_state.portfolio.copy()
             df_port["Live Price"] = [yf.Ticker(t).history(period="1d")['Close'].iloc[-1] if not yf.Ticker(t).history(period="1d").empty else 0 for t in df_port["Ticker"]]
             df_port["Total Invested"] = df_port["Buy Price"] * df_port["Quantity"]
-            df_port["Current Value"] = df_port["Live Price"] * df_port["Quantity"]
-            df_port["P&L (₹)"] = df_port["Current Value"] - df_port["Total Invested"]
-            st.dataframe(df_port, use_container_width=True)
-
-# --- 7. STOCK ANALYSIS ENGINE (Screener.in Style) ---
-else:
-    user_ticker = st.session_state.current_view
-    if st.button("⬅️ Back to Home Search"): st.session_state.current_view = "HOME"; st.rerun()
-    
-    t_obj = yf.Ticker(user_ticker)
-    data = t_obj.history(period="1y")
-    info = t_obj.info
-    display_name = info.get('shortName', user_ticker.replace('.NS', ''))
-
-    if data is not None and not data.empty:
-        curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
-        
-        # Header matching Screener
-        c1, c2 = st.columns([3, 1])
-        c1.markdown(f"<h1 style='color:#1E88E5;'>{display_name}</h1>", unsafe_allow_html=True)
-        c2.metric("Current Price", f"₹{curr_price:.2f}", f"{(curr_price - prev_price):.2f} ({((curr_price - prev_price)/prev_price)*100:.2f}%)")
-
-        data['SMA50'] = data['Close'].rolling(50).mean()
-        
-        # Super Tabs
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Price Chart", "📋 Ratios & Shareholding", "📑 Financial Statements", "💎 AI Quant Verdict", "📥 Pro Export"])
-
-        with tab1:
-            fig = go.Figure(data=[go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'])])
-            fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], line=dict(color='orange'), name='50 SMA'))
-            fig.update_layout(template="plotly_white", margin=dict(t=10, b=10, l=10, r=10), height=500, xaxis_rangeslider_visible=False)
-            st.plotly_chart(fig, use_container_width=True)
-
-        with tab2:
-            st.markdown("### Key Metrics")
-            f1, f2, f3, f4 = st.columns(4)
-            f1.metric("Market Cap (Cr)", f"₹{round(info.get('marketCap', 0)/10000000, 2)}" if info.get('marketCap') else "N/A")
-            f2.metric("P/E Ratio", round(info.get('trailingPE', 0), 2) if info.get('trailingPE') else "N/A")
-            f3.metric("ROE", f"{round(info.get('returnOnEquity', 0)*100, 2)}%" if info.get('returnOnEquity') else "N/A")
-            f4.metric("Debt/Equity", round(info.get('debtToEquity', 0), 2) if info.get('debtToEquity') else "N/A")
-            
-            st.write("---")
-            st.markdown("### 🐋 Shareholding Pattern")
-            insider = round(info.get('heldPercentInsiders', 0) * 100, 2)
-            inst = round(info.get('heldPercentInstitutions', 0) * 100, 2)
-            st.write(f"**Promoters:** {insider}% | **Institutions (FII/DII):** {inst}% | **Public:** {100 - insider - inst}%")
-
-        # --- THE CA SPECIAL TAB ---
-        with tab3:
-            st.markdown("### 📑 Annual Financial Statements")
-            st.info("Institutional Grade P&L and Balance Sheet (Extracted from Yahoo Finance filings).")
-            
-            stmt1, stmt2 = st.tabs(["Income Statement", "Balance Sheet"])
-            with stmt1:
-                try:
-                    fin_df = t_obj.financials
-                    if not fin_df.empty: st.dataframe(fin_df.dropna(how='all'), use_container_width=True)
-                    else: st.warning("Income Statement data not available for this asset.")
-                except: st.warning("Error fetching Income Statement.")
-                
-            with stmt2:
-                try:
-                    bs_df = t_obj.balance_sheet
-                    if not bs_df.empty: st.dataframe(bs_df.dropna(how='all'), use_container_width=True)
-                    else: st.warning("Balance Sheet data not available for this asset.")
-                except: st.warning("Error fetching Balance Sheet.")
-
-        with tab4:
-            entered_code = st.text_input("🔑 Enter Premium Access Code:", type="password")
-            if entered_code == "AMANPRO":
-                st.success("🔓 Algorithm Running...")
-                pe = info.get('trailingPE', 0)
-                if pe > 0 and pe < 20: st.success("✅ **Verdict: STRONG BUY** (Undervalued: Trading at discount).")
-                elif pe >= 20 and pe < 40: st.info("⚖️ **Verdict: HOLD / SIP** (Fairly Valued: Normal pricing).")
-                else: st.warning("⚠️ **Verdict: CAUTION** (Overpriced: High premium).")
-            elif entered_code: st.error("❌ Invalid Code.")
-
-        with tab5:
-            st.markdown("### 📥 Download Institutional Report")
-            report_df = pd.DataFrame({"Metric": ["Company", "Price", "P/E", "ROE", "Debt/Eq"], "Value": [display_name, curr_price, info.get('trailingPE'), info.get('returnOnEquity'), info.get('debtToEquity')]})
-            st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
-
-    else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
