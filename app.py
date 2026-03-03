@@ -5,25 +5,65 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 import pandas as pd
-import numpy as np
 
-# --- 1. PAGE SETUP ---
-st.set_page_config(page_title="Dixit Investment Group | Pro Terminal", layout="wide", initial_sidebar_state="expanded")
+# --- 1. PAGE SETUP & MEMORY ---
+st.set_page_config(page_title="Dixit Investment Group | Screener", layout="wide", initial_sidebar_state="collapsed")
 
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity"])
 
+# --- PREMIUM CSS (Screener & Finology Look) ---
 st.markdown("""
     <style>
-    .block-container { padding-top: 1rem; padding-bottom: 2rem; }
-    hr { margin-top: 1rem; margin-bottom: 1.5rem; border-color: #e0e0e0; }
+    /* Clean Background */
+    .stApp { background-color: #F8FAFC; }
+    
+    /* Center aligning main content */
+    .block-container { padding-top: 0rem; padding-bottom: 2rem; max-width: 1200px; }
+    
+    /* Finology Top Bar */
+    .top-strip {
+        background-color: #EFF6FF;
+        padding: 8px 0px;
+        border-bottom: 2px solid #DBEAFE;
+        display: flex;
+        justify-content: space-around;
+        margin-left: -5rem;
+        margin-right: -5rem;
+        margin-bottom: 3rem;
+    }
+    
+    /* Prevent Button Text Wrapping (The Fix for RELIANC E) */
+    div[data-testid="stButton"] button {
+        white-space: nowrap !important;
+        border-radius: 20px !important; /* Pill shape */
+        border: 1px solid #CBD5E1 !important;
+        background-color: #FFFFFF !important;
+        color: #334155 !important;
+        font-weight: 600 !important;
+        padding: 5px 15px !important;
+    }
+    div[data-testid="stButton"] button:hover {
+        border-color: #3B82F6 !important;
+        color: #3B82F6 !important;
+        background-color: #F8FAFC !important;
+    }
+    
+    /* Primary Button override (Search button) */
+    div[data-testid="stButton"] button[data-baseweb="button"]:first-child {
+        border-radius: 8px !important;
+    }
+
+    /* Screener Headers */
+    .main-title { text-align: center; color: #1E293B; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: sans-serif;}
+    .sub-title { text-align: center; color: #3B82F6; font-size: 1.3rem; font-weight: 600; margin-top: 5px; margin-bottom: 40px; }
+    
     a { text-decoration: none !important; color: inherit !important; }
-    /* Making dataframe headers look professional */
     th { text-align: left !important; background-color: #f4f6f9; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- HELPER FUNCTIONS (INDIAN FORMATTING) ---
+# --- HELPER FUNCTIONS ---
 def format_inr(number):
     if pd.isna(number) or number is None: return "N/A"
     try:
@@ -41,21 +81,7 @@ def format_df_to_crores(df):
     formatted.columns = [str(c).split(' ')[0] for c in formatted.columns]
     return formatted
 
-# --- 2. LEAD GENERATION ---
-@st.dialog("👑 Unlock Premium Access")
-def premium_signup():
-    st.markdown("Join **Dixit Investment Group** for algorithmic access & fundamental models.")
-    YOUR_WHATSAPP_NUMBER = "917052360459" 
-    name = st.text_input("Full Name")
-    city = st.text_input("City")
-    if name and city:
-        raw_message = f"Hello Dixit Investment Group! 📈\n\nI want to purchase the Premium Access Code.\nName: {name}\nCity: {city}"
-        whatsapp_url = f"https://wa.me/{YOUR_WHATSAPP_NUMBER}?text={urllib.parse.quote(raw_message)}"
-        st.link_button("📲 Chat to get Code", whatsapp_url, type="primary", use_container_width=True)
-    else:
-        st.button("📲 Chat to get Code", type="primary", disabled=True, use_container_width=True)
-
-# --- 3. TOP MARKET BAR ---
+# --- 2. TOP MARKET BAR (Finology Style) ---
 @st.cache_data(ttl=300)
 def get_index_data(ticker):
     try: return yf.Ticker(ticker).history(period="2d")
@@ -63,23 +89,38 @@ def get_index_data(ticker):
 
 nifty, sensex, banknifty = get_index_data("^NSEI"), get_index_data("^BSESN"), get_index_data("^NSEBANK")
 
-m1, m2, m3, m4, m5, m6 = st.columns(6)
-def display_index(col, name, data):
+def format_idx_html(name, data):
     if data is not None and len(data) >= 2:
         curr, prev = data['Close'].iloc[-1], data['Close'].iloc[-2]
         chg, pct = curr - prev, ((curr - prev)/prev)*100
-        color = "green" if chg >= 0 else "red"
-        col.markdown(f"**{name}**: {format_inr(round(curr, 2))} <span style='color:{color};'>({pct:.2f}%)</span>", unsafe_allow_html=True)
+        color = "#16A34A" if chg >= 0 else "#DC2626"
+        sign = "+" if chg >= 0 else ""
+        return f"<span style='font-size: 13px; font-weight: bold; color: #1E3A8A;'>{name} <span style='background-color: #3B82F6; color: white; padding: 2px 6px; border-radius: 4px; margin: 0 4px;'>{format_inr(round(curr, 2))}</span> <span style='color: {color};'>{sign}{round(chg, 2)} ({sign}{pct:.2f}%)</span></span>"
+    return ""
 
-display_index(m2, "SENSEX", sensex)
-display_index(m3, "NIFTY 50", nifty)
-display_index(m4, "BANKNIFTY", banknifty)
-st.write("---")
+# Injecting the top bar HTML
+st.markdown(f"""
+    <div class="top-strip">
+        {format_idx_html("SENSEX", sensex)}
+        {format_idx_html("NIFTY 50", nifty)}
+        {format_idx_html("BANKNIFTY", banknifty)}
+    </div>
+""", unsafe_allow_html=True)
 
+
+# --- 3. LEAD GENERATION & SIDEBAR ---
 TOP_STOCKS = {"RELIANCE.NS": "Reliance", "TCS.NS": "TCS", "HDFCBANK.NS": "HDFC Bank", "INFY.NS": "Infosys", "ZOMATO.NS": "Zomato", "ITC.NS": "ITC", "SBIN.NS": "SBI"}
 
-# --- 4. SIDEBAR MENU ---
-st.sidebar.header("⚙️ Main Menu")
+@st.dialog("👑 Unlock Premium Access")
+def premium_signup():
+    st.markdown("Join **Dixit Investment Group** for algorithmic access & fundamental models.")
+    name, city = st.text_input("Full Name"), st.text_input("City")
+    if name and city:
+        st.link_button("📲 Chat to get Code", f"https://wa.me/917052360459?text={urllib.parse.quote(f'Hello Dixit Investment Group! I want to purchase the Premium Access Code. Name: {name}, City: {city}')}", type="primary", use_container_width=True)
+    else:
+        st.button("📲 Chat to get Code", type="primary", disabled=True, use_container_width=True)
+
+st.sidebar.markdown("<h3 style='color:#1E88E5;'>DIG Menu</h3>", unsafe_allow_html=True)
 if st.sidebar.button("🏠 Home Dashboard", use_container_width=True): st.session_state.current_view = "HOME"; st.rerun()
 if st.sidebar.button("⚖️ Peer Comparison", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
@@ -93,10 +134,9 @@ def get_live_news(company_name):
         return [{'title': i.find('title').text.rsplit(' - ', 1)[0] if ' - ' in i.find('title').text else i.find('title').text, 'link': i.find('link').text, 'date': i.find('pubDate').text[5:16]} for i in root.findall('.//item')[:4]]
     except: return []
 
-# --- 5. PEER COMPARISON VIEW ---
+# --- 4. PEER COMPARISON VIEW ---
 if st.session_state.current_view == "COMPARE":
-    st.markdown("<h3 style='color:#1E88E5; margin-top:-20px;'>🏢 Dixit Investment Group</h3>", unsafe_allow_html=True)
-    st.markdown("### ⚖️ Peer-to-Peer Asset Comparison")
+    st.markdown("<h2 style='color:#1E293B;'>⚖️ Peer-to-Peer Asset Comparison</h2>", unsafe_allow_html=True)
     if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
     st.write("---")
     
@@ -113,31 +153,31 @@ if st.session_state.current_view == "COMPARE":
         }
         st.table(pd.DataFrame(comp_data).set_index("Metric"))
 
-# --- 6. HOME PAGE ---
+# --- 5. HOME PAGE (Screener + Finology UI) ---
 elif st.session_state.current_view == "HOME":
-    st.markdown("""
-        <div style='text-align: center; padding: 20px;'>
-            <h1 style='color: #1E88E5; font-size: 3.5rem; margin-bottom: 0px;'>🏢 Dixit Investment Group</h1>
-            <p style='color: #555; font-size: 1.2rem; font-weight: bold;'>A Premium Wealth and Portfolio Management Company</p>
-        </div>
-    """, unsafe_allow_html=True)
+    
+    st.markdown('<h1 class="main-title">Dixit Investment Group</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">The Modern Stock Screener that helps you pick better stocks.</p>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        man_t = st.text_input("🔍 Type a Company Name or NSE Symbol (e.g., ITC)", placeholder="Search for a company...")
-        if st.button("Run Fundamental Audit", type="primary", use_container_width=True):
+        man_t = st.text_input("Search", placeholder="🔍 Type a Company Name or NSE Symbol (e.g., ITC)", label_visibility="collapsed")
+        if st.button("Search & Analyze", type="primary", use_container_width=True):
             if man_t:
                 st.session_state.current_view = man_t.upper() if man_t.upper().endswith(".NS") else f"{man_t.upper()}.NS"
                 st.rerun()
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; font-weight: bold;'>What's Trending:</p>", unsafe_allow_html=True)
-        t1, t2, t3, t4, t5 = st.columns(5)
-        if t1.button("RELIANCE", use_container_width=True): st.session_state.current_view = "RELIANCE.NS"; st.rerun()
-        if t2.button("HDFCBANK", use_container_width=True): st.session_state.current_view = "HDFCBANK.NS"; st.rerun()
-        if t3.button("ZOMATO", use_container_width=True): st.session_state.current_view = "ZOMATO.NS"; st.rerun()
-        if t4.button("TCS", use_container_width=True): st.session_state.current_view = "TCS.NS"; st.rerun()
-        if t5.button("ITC", use_container_width=True): st.session_state.current_view = "ITC.NS"; st.rerun()
+        # Trending Section
+        col_t1, col_t2 = st.columns([1, 4])
+        col_t1.markdown("**What's Trending:**")
+        with col_t2:
+            t1, t2, t3, t4, t5 = st.columns(5)
+            if t1.button("RELIANCE"): st.session_state.current_view = "RELIANCE.NS"; st.rerun()
+            if t2.button("HDFCBANK"): st.session_state.current_view = "HDFCBANK.NS"; st.rerun()
+            if t3.button("ZOMATO"): st.session_state.current_view = "ZOMATO.NS"; st.rerun()
+            if t4.button("TCS"): st.session_state.current_view = "TCS.NS"; st.rerun()
+            if t5.button("ITC"): st.session_state.current_view = "ITC.NS"; st.rerun()
 
     st.write("---")
     
@@ -176,11 +216,10 @@ elif st.session_state.current_view == "HOME":
             df_port["P&L (₹)"] = df_port["Current Value"] - df_port["Total Invested"]
             st.dataframe(df_port, use_container_width=True)
 
-# --- 7. STOCK ANALYSIS ENGINE (Extended Ratios & Crores) ---
+# --- 6. STOCK ANALYSIS ENGINE (Extended Ratios & Crores) ---
 else:
     user_ticker = st.session_state.current_view
     
-    st.markdown("<h3 style='color:#1E88E5; margin-top:-20px;'>🏢 Dixit Investment Group</h3>", unsafe_allow_html=True)
     if st.button("⬅️ Back to Home Search"): st.session_state.current_view = "HOME"; st.rerun()
     st.write("---")
     
@@ -193,7 +232,7 @@ else:
         curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
         
         c1, c2 = st.columns([3, 1])
-        c1.markdown(f"<h2>{display_name}</h2>", unsafe_allow_html=True)
+        c1.markdown(f"<h1 style='color: #1E293B;'>{display_name}</h1>", unsafe_allow_html=True)
         c2.metric("Current Price", f"₹{format_inr(round(curr_price, 2))}", f"{(curr_price - prev_price):.2f} ({((curr_price - prev_price)/prev_price)*100:.2f}%)")
 
         data['SMA50'] = data['Close'].rolling(50).mean()
@@ -208,8 +247,6 @@ else:
 
         with tab2:
             st.markdown("### 📈 Comprehensive Financial Metrics")
-            
-            # ROW 1: Core & Value
             f1, f2, f3, f4 = st.columns(4)
             mc = info.get('marketCap', 0)
             f1.metric("Market Cap (Cr)", f"₹{format_inr(round(mc/10000000, 2))}" if mc else "N/A")
@@ -218,8 +255,6 @@ else:
             f4.metric("Dividend Yield", f"{round(info.get('dividendYield', 0)*100, 2)}%" if info.get('dividendYield') else "0.00%")
             
             st.write("") 
-            
-            # ROW 2: Returns & Book
             r1, r2, r3, r4 = st.columns(4)
             r1.metric("ROE", f"{round(info.get('returnOnEquity', 0)*100, 2)}%" if info.get('returnOnEquity') else "N/A")
             r2.metric("ROA", f"{round(info.get('returnOnAssets', 0)*100, 2)}%" if info.get('returnOnAssets') else "N/A")
@@ -227,8 +262,6 @@ else:
             r4.metric("Book Value", f"₹{round(info.get('bookValue', 0), 2)}" if info.get('bookValue') else "N/A")
             
             st.write("") 
-            
-            # ROW 3: Margins & Liquidity
             m_col1, m_col2, m_col3, m_col4 = st.columns(4)
             m_col1.metric("Profit Margin", f"{round(info.get('profitMargins', 0)*100, 2)}%" if info.get('profitMargins') else "N/A")
             m_col2.metric("Operating Margin", f"{round(info.get('operatingMargins', 0)*100, 2)}%" if info.get('operatingMargins') else "N/A")
@@ -248,15 +281,13 @@ else:
             with stmt1:
                 try:
                     fin_df = t_obj.financials
-                    if not fin_df.empty: 
-                        st.dataframe(format_df_to_crores(fin_df.dropna(how='all')), use_container_width=True)
+                    if not fin_df.empty: st.dataframe(format_df_to_crores(fin_df.dropna(how='all')), use_container_width=True)
                     else: st.warning("Income Statement data not available.")
                 except: st.warning("Error fetching Income Statement.")
             with stmt2:
                 try:
                     bs_df = t_obj.balance_sheet
-                    if not bs_df.empty: 
-                        st.dataframe(format_df_to_crores(bs_df.dropna(how='all')), use_container_width=True)
+                    if not bs_df.empty: st.dataframe(format_df_to_crores(bs_df.dropna(how='all')), use_container_width=True)
                     else: st.warning("Balance Sheet data not available.")
                 except: st.warning("Error fetching Balance Sheet.")
 
