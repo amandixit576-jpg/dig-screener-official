@@ -267,6 +267,15 @@ elif st.session_state.current_view == "HOME":
             st.dataframe(display_df, use_container_width=True)
 
 # --- 6. STOCK ANALYSIS ENGINE ---
+
+# NAYA FUNCTION: Data ko 1 ghante (3600 sec) ke liye cache karega aur crash hone se bachayega
+@st.cache_data(ttl=3600)
+def fetch_safe_info(ticker_symbol):
+    try:
+        return yf.Ticker(ticker_symbol).info
+    except Exception as e:
+        return {} # Agar Yahoo block kare toh khali dict bhej de, app crash na ho
+
 else:
     user_ticker = st.session_state.current_view
     
@@ -274,8 +283,15 @@ else:
     st.write("---")
     
     t_obj = yf.Ticker(user_ticker)
-    data = t_obj.history(period="1y")
-    info = t_obj.info
+    
+    # Try-except for historical data as well just to be safe on cloud
+    try:
+        data = t_obj.history(period="1y")
+    except:
+        data = pd.DataFrame() # Empty dataframe if failed
+
+    # Yahan humne purana t_obj.info hata kar naya safe function lagaya hai
+    info = fetch_safe_info(user_ticker)
     display_name = info.get('shortName', user_ticker.replace('.NS', ''))
 
     if data is not None and not data.empty:
@@ -474,3 +490,4 @@ else:
             st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+
