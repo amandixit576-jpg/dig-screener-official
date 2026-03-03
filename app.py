@@ -445,15 +445,68 @@ else:
                     st.divider()
             else: st.info("No recent news found.")
 
-        with tab6:
+       with tab6:
+            st.markdown("### 💎 AI Quant & Market Screener")
             entered_code = st.text_input("🔑 Enter Premium Access Code:", type="password")
+            
             if entered_code == "AMANPRO":
-                st.success("🔓 Algorithm Running...")
+                st.success("🔓 Premium Access Granted! Running Live Quant Models...")
+                
+                # --- NEW LIVE MOMENTUM SCANNER ---
+                st.write("#### 🎯 Today's High-Probability Breakout Setups")
+                st.caption("Disclaimer: These algorithms identify strong technical momentum (RSI > 60 & Price > 50 SMA). Always manage your risk.")
+                
+                if st.button("🔍 Scan Top Market Assets", type="primary"):
+                    with st.spinner("Scanning real-time market data... This takes a few seconds."):
+                        top_picks = []
+                        # You can add more NSE symbols to this list
+                        SCAN_LIST = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS", "SBIN.NS", "ZOMATO.NS", "BHARTIARTL.NS", "ICICIBANK.NS", "LT.NS"]
+                        
+                        for sym in SCAN_LIST:
+                            try:
+                                scan_data = yf.Ticker(sym).history(period="3mo")
+                                if len(scan_data) > 50:
+                                    close_price = scan_data['Close'].iloc[-1]
+                                    sma50 = scan_data['Close'].rolling(50).mean().iloc[-1]
+                                    
+                                    # Calculate Live RSI
+                                    delta = scan_data['Close'].diff()
+                                    up = delta.clip(lower=0)
+                                    down = -1 * delta.clip(upper=0)
+                                    ema_up = up.ewm(com=13, adjust=False).mean()
+                                    ema_down = down.ewm(com=13, adjust=False).mean()
+                                    rsi = 100 - (100 / (1 + (ema_up / ema_down)))
+                                    current_rsi = rsi.iloc[-1]
+                                    
+                                    # Condition: Price above 50 SMA AND RSI indicates strong momentum
+                                    if close_price > sma50 and current_rsi >= 60:
+                                        top_picks.append({
+                                            "Asset": sym.replace('.NS', ''),
+                                            "Price (₹)": round(close_price, 2),
+                                            "RSI Strength": round(current_rsi, 2),
+                                            "Signal": "Bullish 🚀"
+                                        })
+                            except:
+                                pass
+                                
+                        if top_picks:
+                            # Display sorted by highest momentum
+                            result_df = pd.DataFrame(top_picks).sort_values(by="RSI Strength", ascending=False)
+                            st.table(result_df)
+                        else:
+                            st.info("No strong momentum setups found right now. The broader market might be consolidating or bearish.")
+                
+                st.write("---")
+                
+                # --- OLD VALUATION MODEL ---
+                st.write("#### 📊 Asset Valuation Model (P/E Based)")
                 pe = info.get('trailingPE', 0)
                 if pe > 0 and pe < 20: st.success("✅ **Verdict: STRONG BUY** (Undervalued: Trading at discount).")
                 elif pe >= 20 and pe < 40: st.info("⚖️ **Verdict: HOLD / SIP** (Fairly Valued: Normal pricing).")
                 else: st.warning("⚠️ **Verdict: CAUTION** (Overpriced: High premium).")
-            elif entered_code: st.error("❌ Invalid Code.")
+                
+            elif entered_code: 
+                st.error("❌ Invalid Code.")
 
         with tab7:
             st.markdown("### 📥 Download Institutional Report")
@@ -461,4 +514,5 @@ else:
             st.download_button(label="Download CSV", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_Report.csv", mime="text/csv", type="primary")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+
 
