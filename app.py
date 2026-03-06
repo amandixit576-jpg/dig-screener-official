@@ -552,6 +552,49 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             else: st.write("Data not available.")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+# --- PROFESSIONAL ABOUT SECTION ---
+st.markdown("---") # Ek clean divider line
+with st.expander("🏢 About Dixit Investment Group"):
+    st.markdown("""
+    **Dixit Investment Group** is a premium wealth management and portfolio analytics terminal.
+    
+    Our advanced quant-models and data-driven screeners are designed to provide institutional-grade insights for the modern investor.
+    
+    * 📍 **Headquarters:** Lucknow, UP
+    * 💼 **Core Expertise:** Stock Screening, SIP Planning & Tax Audit
+    * 🛡️ **Status:** Premium Financial Terminal
+    """)
+
+# --- CUSTOM COPYRIGHT & LOGO FOOTER ---
+custom_footer = """
+<style>
+.custom-footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #0E1117; /* Dark theme se match karne ke liye */
+    color: #888888;
+    text-align: center;
+    padding: 12px;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    border-top: 1px solid #333;
+    z-index: 99999; /* Isko sabse upar rakhne ke liye */
+}
+/* Page ke end mein thodi jagah chhodne ke liye taaki content footer ke peeche na chhupe */
+.block-container {
+    padding-bottom: 80px; 
+}
+</style>
+
+<div class="custom-footer">
+    <strong><span style="color: #D4AF37;">⚜️ DIXIT INVESTMENT GROUP</span></strong><br>
+    © 2026 All Rights Reserved. | Registered Premium Terminal <br>
+    <span style="font-size: 10px; color: #555;">Strictly for educational and analytical purposes.</span>
+</div>
+"""
+st.markdown(custom_footer, unsafe_allow_html=True)
 
 
 
