@@ -1,9 +1,16 @@
 import streamlit as st
-# --- HIDE ONLY FOOTER & DEPLOY BUTTON ---
+# --- HIDE FORK, MENU & BOTTOM LOGOS ---
 hide_st_style = """
             <style>
-            footer {visibility: hidden;}
-            .stDeployButton {display: none;}
+            /* 1. Upar Right side ka 'Fork', Github aur 3-dots gayab karega */
+            [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+            
+            /* 2. Neeche Right side ke Red/Green logos gayab karega */
+            [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+            [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
+            
+            /* 3. Sabse neeche ka footer gayab karega */
+            footer {visibility: hidden !important; display: none !important;}
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -538,6 +545,7 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             else: st.write("Data not available.")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+
 
 
 
