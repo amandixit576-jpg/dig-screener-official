@@ -1,12 +1,13 @@
 import streamlit as st
-# --- HIDE STREAMLIT BRANDING ---
+# --- HIDE STREAMLIT BRANDING (PRO VERSION) ---
 hide_st_style = """
             <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            /* Niche wala code extra buttons ko hide karta hai */
-            .viewerBadge_container__1QSob {visibility: hidden;}
+            #MainMenu {visibility: hidden !important;}
+            footer {visibility: hidden !important;}
+            header {visibility: hidden !important;}
+            /* Ye niche ke codes saare extra buttons/logos ko uda denge */
+            .stDeployButton {display: none !important;}
+            [data-testid="stToolbar"] {visibility: hidden !important;}
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -541,4 +542,5 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             else: st.write("Data not available.")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
+
 
