@@ -1,62 +1,6 @@
 import streamlit as st
 from streamlit_supabase_auth import login_form
 import os
-
-# Page Config
-st.set_page_config(page_title="DIG Terminal", page_icon="📈", layout="wide")
-# 2. Iske theek niche ye CSS daal do (Branding hatane ke liye)
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# 3. Baaki ka code (Auth aur Analysis) niche chalne do...
-# Render ke secure locker se chabiyan nikaalna
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-
-# --- AUTHENTICATION GATE ---
-session = login_form(
-    url=SUPABASE_URL,
-    apiKey=SUPABASE_KEY,
-    providers=["google"],
-)
-
-if not session:
-    st.markdown("<h2 style='text-align: center;'>Welcome to Dixit Investment Group</h2>", unsafe_allow_html=True)
-    st.warning("🔒 Please sign in to access the Premium Financial Terminal.")
-    st.stop() # Login ke bina niche ka code nahi chalega
-
-# --- TERMINAL CONTENT ---
-st.success(f"Welcome to the Terminal, {session['user']['email']}!")
-st.title("📈 Institutional Market Dashboard")
-# (Aapka baaki ka stock analysis wala code iske niche aayega)
-# --- PRECISION CSS: HIDE ONLY RIGHT-SIDE BUTTONS & LOGOS ---
-hide_st_style = """
-            <style>
-            /* 1. RIGHT side ke buttons (Fork, GitHub, 3-dots) ko gayab karega */
-            [data-testid="stToolbarActions"] {display: none !important;}
-
-            /* 2. LEFT side ka sidebar button (>>) hamesha ZINDA rakhega */
-            [data-testid="collapsedControl"] {
-                display: flex !important;
-                visibility: visible !important;
-            }
-
-            /* 3. NEECHE ke Red/Green logos aur Footer ko uda dega */
-            [data-testid="stStatusWidget"], 
-            [data-testid="stDecoration"], 
-            .viewerBadge_container__1QSob, 
-            footer {
-                display: none !important;
-            }
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
 import yfinance as yf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -66,35 +10,38 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 
 # --- 1. PAGE SETUP & MEMORY ---
+st.set_page_config(page_title="DIG Terminal", page_icon="📈", layout="wide")
 
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity", "Hold Type"])
 
-# --- PREMIUM CSS & TAGLINE STYLING ---
-st.markdown("""
+# --- 2. CSS & BRANDING HIDE ---
+hide_st_style = """
     <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    /* 1. RIGHT side ke buttons (Fork, GitHub, 3-dots) ko gayab karega */
+    [data-testid="stToolbarActions"] {display: none !important;}
+    /* 2. LEFT side ka sidebar button (>>) hamesha ZINDA rakhega */
+    [data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; }
+    /* 3. NEECHE ke Red/Green logos aur Footer ko uda dega */
+    [data-testid="stStatusWidget"], [data-testid="stDecoration"], .viewerBadge_container__1QSob, footer { display: none !important; }
+    
     .block-container { padding-top: 0rem; padding-bottom: 2rem; max-width: 1200px; }
-    div[data-testid="stButton"] button {
-        white-space: nowrap !important;
-        border-radius: 8px !important;
-        padding-left: 5px !important;
-        padding-right: 5px !important;
-    }
+    div[data-testid="stButton"] button { white-space: nowrap !important; border-radius: 8px !important; padding-left: 5px !important; padding-right: 5px !important; }
     div[data-testid="stButton"] button p { font-size: 14px !important; }
     .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: 'Arial Black', sans-serif; letter-spacing: -1px;}
-    
-    /* YAHAN AAPKI TAGLINE STYLING HAI */
     .sub-title { text-align: center; color: #E5A91E; font-size: 1.2rem; font-weight: 700; margin-top: 0px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;}
     .tag-line { text-align: center; color: #666; font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic;}
-    
     a { text-decoration: none !important; color: inherit !important; }
     th { text-align: left !important; background-color: rgba(150, 150, 150, 0.1); }
-    /* Thematic Basket Cards */
     .basket-card { border: 1px solid #ddd; padding: 15px; border-radius: 10px; background: #f8f9fa; text-align: center; margin-bottom: 10px; height: 130px; }
     .basket-title { color: #1E88E5; font-weight: 700; font-size: 1.1rem; }
     .basket-card p { font-size: 0.9rem; color: #666; margin-top: 5px; }
     </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # --- HELPER FUNCTIONS ---
 def format_inr(number):
@@ -131,7 +78,7 @@ def fetch_safe_info(ticker_symbol):
     try: return yf.Ticker(ticker_symbol).info
     except Exception: return {} 
 
-# --- 2. TOP MARKET BAR ---
+# --- 3. TOP MARKET BAR ---
 @st.cache_data(ttl=300)
 def get_index_data(ticker):
     try: return yf.Ticker(ticker).history(period="2d")
@@ -154,7 +101,7 @@ display_index(top3, "NIFTY 50", nifty)
 display_index(top4, "BANKNIFTY", banknifty)
 st.write("---")
 
-# --- 3. LEAD GENERATION & SIDEBAR ---
+# --- 4. LEAD GENERATION & SIDEBAR ---
 TOP_STOCKS = {"RELIANCE.NS": "Reliance", "TCS.NS": "TCS", "HDFCBANK.NS": "HDFC Bank", "INFY.NS": "Infosys", "ZOMATO.NS": "Zomato", "ITC.NS": "ITC", "SBIN.NS": "SBI"}
 
 @st.dialog("👑 Unlock Premium Access")
@@ -172,6 +119,8 @@ if st.sidebar.button("🧺 Theme Baskets", use_container_width=True): st.session
 if st.sidebar.button("⚖️ Peer Comparison", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
 if st.sidebar.button("📈 Mutual Funds", use_container_width=True): st.session_state.current_view = "MUTUAL_FUNDS"; st.rerun()
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
+# NAYA LOGIN BUTTON YAHAN ADD HUA HAI 👇
+if st.sidebar.button("🔒 My Account", type="primary", use_container_width=True): st.session_state.current_view = "MY_ACCOUNT"; st.rerun()
 if st.sidebar.button("👑 Upgrade to Premium", use_container_width=True): premium_signup()
 
 @st.cache_data(ttl=1800)
@@ -182,8 +131,29 @@ def get_live_news(company_name):
         return [{'title': i.find('title').text.rsplit(' - ', 1)[0] if ' - ' in i.find('title').text else i.find('title').text, 'link': i.find('link').text, 'date': i.find('pubDate').text[5:16]} for i in root.findall('.//item')[:4]]
     except: return []
 
-# --- 4. PEER COMPARISON VIEW ---
-if st.session_state.current_view == "COMPARE":
+# --- 5. APP SECTIONS ---
+
+# ---> 🟢 NAYA LOGIN GATE SECTION <---
+if st.session_state.current_view == "MY_ACCOUNT":
+    st.markdown("<h2 style='color:#1E88E5;'>🔒 Client Portal</h2>", unsafe_allow_html=True)
+    if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
+    st.write("---")
+
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+    session = login_form(url=SUPABASE_URL, apiKey=SUPABASE_KEY, providers=["google"])
+
+    if not session:
+        st.warning("👈 Please sign in with Google to access your premium dashboard and saved portfolios.")
+        st.stop() # Ab ye sirf is page par rokega!
+
+    st.success(f"Welcome back to the Premium Terminal, {session['user']['email']}!")
+    st.markdown("### 📈 Institutional Market Dashboard")
+    st.info("Your premium features will be loaded here.")
+
+# ---> ⚖️ PEER COMPARISON VIEW <---
+elif st.session_state.current_view == "COMPARE":
     st.markdown("<h2 style='color:#1E88E5;'>⚖️ Peer-to-Peer Asset Comparison</h2>", unsafe_allow_html=True)
     if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
     st.write("---")
@@ -209,7 +179,7 @@ if st.session_state.current_view == "COMPARE":
         }
         st.table(pd.DataFrame(comp_data).set_index("Metric"))
 
-# --- 4.5 MUTUAL FUND TRACKER ---
+# ---> 📈 MUTUAL FUND TRACKER <---
 elif st.session_state.current_view == "MUTUAL_FUNDS":
     st.markdown("<h2 style='color:#1E88E5;'>📈 Mutual Fund Tracker</h2>", unsafe_allow_html=True)
     if st.button("⬅️ Back to Home Engine"): st.session_state.current_view = "HOME"; st.rerun()
@@ -242,7 +212,7 @@ elif st.session_state.current_view == "MUTUAL_FUNDS":
                 st.plotly_chart(fig, use_container_width=True)
             else: st.error("⚠️ Data not available for this Mutual Fund right now.")
 
-# --- 4.6 THEME BASKETS ---
+# ---> 🧺 THEME BASKETS <---
 elif st.session_state.current_view == "BASKETS":
     st.markdown("<h2 style='color:#1E88E5;'>🧺 Ready-Made Theme Baskets</h2>", unsafe_allow_html=True)
     st.write("Invest in ideas, not just single stocks. Explore top sectors and themes driving the market.")
@@ -271,7 +241,7 @@ elif st.session_state.current_view == "BASKETS":
         st.markdown('<div class="basket-card"><div class="basket-title">💰 Dividend Kings</div><p>Consistent high-yield cash generators (Coal India, ITC)</p></div>', unsafe_allow_html=True)
         if st.button("Analyze Dividend Kings", key="b_div", use_container_width=True): st.session_state.current_view = "COALINDIA.NS"; st.rerun()
 
-# --- 5. HOME PAGE ---
+# ---> 🏠 HOME PAGE <---
 elif st.session_state.current_view == "HOME":
     st.markdown('<h1 class="main-title">DIXIT INVESTMENT GROUP</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">A Premium Wealth and Portfolio Management Co.</p>', unsafe_allow_html=True)
@@ -355,9 +325,9 @@ elif st.session_state.current_view == "HOME":
                 display_df[col] = display_df[col].apply(lambda x: format_inr(round(x, 2)))
                 
             st.dataframe(display_df, use_container_width=True)
-            st.caption("ℹ️ *Tax estimator reflects new Indian Budget rules: 20% for STCG and 12.5% for LTCG (ignoring 1.25L exemption threshold for strict modeling).*")
+            st.caption("ℹ️ *Tax estimator reflects new Indian Budget rules: 20% for STCG and 12.5% for LTCG.*")
 
-# --- 6. STOCK ANALYSIS ENGINE ---
+# ---> 📊 STOCK ANALYSIS ENGINE <---
 else:
     user_ticker = st.session_state.current_view
     
@@ -381,7 +351,7 @@ else:
 
         data['SMA50'] = data['Close'].rolling(50).mean()
         
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["📊 Price Chart", "📋 Pro Ratios & Whales", "📑 Financials (In Cr)", "🏢 Corp Actions", "📰 Live News & Sentiment", "💎 AI Quant", "📥 Influencer Export", "🧑‍💼 CA's Audit Desk"])
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["📊 Price Chart", "📋 Pro Ratios", "📑 Financials", "🏢 Corp Actions", "📰 Live News", "💎 AI Quant", "📥 Export", "🧑‍💼 CA's Audit"])
 
         with tab1:
             st.markdown("### 📊 Advanced Technical Chart")
@@ -587,7 +557,8 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             else: st.write("Data not available.")
 
     else: st.error("⚠️ Invalid Asset Symbol. Try searching something like 'TCS'.")
-# --- MEGA FOOTER (ZERO SPACES - LAYOUT FIX) ---
+
+# --- 6. MEGA FOOTER ---
 mega_footer = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
@@ -648,9 +619,3 @@ mega_footer = """
 </div>
 """
 st.markdown(mega_footer, unsafe_allow_html=True)
-
-
-
-
-
-
