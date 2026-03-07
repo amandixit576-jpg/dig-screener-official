@@ -438,6 +438,7 @@ else:
                 e9.metric("ROCE", f"{round(info.get('returnOnCapitalEmployed', 0)*100, 2)}%" if info.get('returnOnCapitalEmployed') else "N/A")
 
         st.write("---")
+        data['SMA50'] = data['Close'].rolling(50).mean()
          # ISKE THEEK NICHE AAPKA PURANA 'tab1, tab2 = st.tabs(...)' WALA CODE HOGA
         
         tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["📊 Price Chart", "📋 Pro Ratios", "📑 Financials", "🏢 Corp Actions", "📰 Live News", "💎 AI Quant", "📥 Export", "🧑‍💼 CA's Audit"])
@@ -708,6 +709,7 @@ mega_footer = """
 </div>
 """
 st.markdown(mega_footer, unsafe_allow_html=True)
+
 
 
 
