@@ -10,7 +10,10 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 
 # --- 1. PAGE SETUP & MEMORY ---
-st.set_page_config(page_title="DIG Terminal", page_icon="📈", layout="wide")
+# Purana: page_icon="📈"
+# Naya: page_icon="logo.png"
+
+st.set_page_config(page_title="Dixit Investment Group | Screener", page_icon="logo.png", layout="wide")
 
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity", "Hold Type"])
@@ -619,3 +622,4 @@ mega_footer = """
 </div>
 """
 st.markdown(mega_footer, unsafe_allow_html=True)
+
