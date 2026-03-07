@@ -20,43 +20,42 @@ if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFram
 
 # --- 2. CSS & BRANDING HIDE ---
 # --- 2. CSS & BRANDING HIDE (TOP NAV STYLING) ---
+# --- 2. CSS & ADAPTIVE THEME (LIGHT/DARK FRIENDLY) ---
 hide_st_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     [data-testid="stToolbarActions"] {display: none !important;}
-    
-    /* LEFT SIDEBAR HAMESHA KE LIYE GAYAB */
     [data-testid="collapsedControl"] { display: none !important; }
     section[data-testid="stSidebar"] { display: none !important; }
-    
     [data-testid="stStatusWidget"], [data-testid="stDecoration"], .viewerBadge_container__1QSob { display: none !important; }
     
     .block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1200px; }
     
-    /* TOP NAV BUTTONS STYLING */
+    /* ADAPTIVE NAV BUTTONS */
     div[data-testid="column"] button[kind="secondary"] {
         border: none !important;
         background: transparent !important;
         font-weight: 600 !important;
         font-size: 16px !important;
-        color: #333 !important;
         padding: 0px !important;
+        color: var(--text-color) !important; /* Adjusts to light/dark */
     }
     div[data-testid="column"] button[kind="secondary"]:hover {
         color: #1E88E5 !important;
     }
     
-    /* Primary buttons (Account/Premium) */
     div[data-testid="stButton"] button { white-space: nowrap !important; border-radius: 8px; padding-left: 10px; padding-right: 10px; }
     
+    /* ADAPTIVE TEXT COLORS */
     .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: 'Arial Black', sans-serif; letter-spacing: -1px;}
     .sub-title { text-align: center; color: #E5A91E; font-size: 1.2rem; font-weight: 700; margin-top: 0px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;}
-    .tag-line { text-align: center; color: #666; font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic;}
-    .basket-card { border: 1px solid #ddd; padding: 15px; border-radius: 10px; background: #f8f9fa; text-align: center; margin-bottom: 10px; height: 130px; }
+    .tag-line { text-align: center; color: var(--text-color); font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic; opacity: 0.7;}
+    
+    .basket-card { border: 1px solid rgba(128,128,128,0.2); padding: 15px; border-radius: 10px; background: var(--secondary-background-color); text-align: center; margin-bottom: 10px; height: 130px; }
     .basket-title { color: #1E88E5; font-weight: 700; font-size: 1.1rem; }
-    .basket-card p { font-size: 0.9rem; color: #666; margin-top: 5px; }
+    .basket-card p { font-size: 0.9rem; color: var(--text-color); margin-top: 5px; opacity: 0.8;}
     </style>
 """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -91,10 +90,22 @@ def format_df_to_crores(df):
     formatted.columns = [str(c).split(' ')[0] for c in formatted.columns]
     return formatted
 
-@st.cache_data(ttl=3600)
+# 🔥 CACHE EVERYTHING TO MAKE SITE FLY
+@st.cache_data(ttl=3600, show_spinner=False)
 def fetch_safe_info(ticker_symbol):
     try: return yf.Ticker(ticker_symbol).info
-    except Exception: return {} 
+    except: return {} 
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_stock_history(ticker_symbol, period="1y"):
+    try: return yf.Ticker(ticker_symbol).history(period=period)
+    except: return pd.DataFrame()
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_financials(ticker_symbol):
+    t = yf.Ticker(ticker_symbol)
+    try: return t.financials, t.balance_sheet
+    except: return pd.DataFrame(), pd.DataFrame()
 
 # --- 3. TOP MARKET BAR ---
 @st.cache_data(ttl=300)
@@ -354,29 +365,80 @@ elif st.session_state.current_view == "HOME":
             st.dataframe(display_df, use_container_width=True)
             st.caption("ℹ️ *Tax estimator reflects new Indian Budget rules: 20% for STCG and 12.5% for LTCG.*")
 
-# ---> 📊 STOCK ANALYSIS ENGINE <---
+# ---> 📊 STOCK ANALYSIS ENGINE (TICKER-STYLE UI) <---
 else:
     user_ticker = st.session_state.current_view
     
-    if st.button("⬅️ Back to Home Search"): st.session_state.current_view = "HOME"; st.rerun()
-    st.write("---")
-    
-    t_obj = yf.Ticker(user_ticker)
-    try: data = t_obj.history(period="1y")
-    except: data = pd.DataFrame()
+    with st.spinner("Executing Quant Models..."):
+        data = fetch_stock_history(user_ticker)
+        info = fetch_safe_info(user_ticker)
         
-    info = fetch_safe_info(user_ticker)
     display_name = info.get('shortName', user_ticker.replace('.NS', ''))
 
     if data is not None and not data.empty:
         curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
+        chg = curr_price - prev_price
+        pct = (chg/prev_price)*100
+        color = "#16A34A" if chg >= 0 else "#DC2626"
+        arrow = "▲" if chg >= 0 else "▼"
         
+        # --- TOP HEADER ---
         c1, c2 = st.columns([3, 1])
-        c1.markdown(f"<h1 style='color: #1E293B; margin-bottom: 0px;'>{display_name}</h1>", unsafe_allow_html=True)
-        c1.caption("Analyzed securely via Dixit Investment Group Intelligence")
-        c2.metric("Current Price", f"₹{format_inr(round(curr_price, 2))}", f"{(curr_price - prev_price):.2f} ({((curr_price - prev_price)/prev_price)*100:.2f}%)")
+        c1.markdown(f"<h1 style='margin-bottom: 0px;'>{display_name}</h1>", unsafe_allow_html=True)
+        c1.caption(f"NSE: **{user_ticker.replace('.NS','')}** | Sector: **{info.get('sector', 'N/A')}**")
+        
+        c2.markdown(f"<h2 style='text-align: right; margin-bottom: 0px;'>₹{format_inr(round(curr_price, 2))}</h2>", unsafe_allow_html=True)
+        c2.markdown(f"<p style='text-align: right; color: {color}; font-weight: bold;'>{arrow} {format_inr(round(chg,2))} ({round(pct,2)}%)</p>", unsafe_allow_html=True)
 
-        data['SMA50'] = data['Close'].rolling(50).mean()
+        st.write("")
+        
+        # --- TICKER STYLE CARDS (Price Summary & Essentials) ---
+        card_col1, card_col2 = st.columns([1, 1.5])
+        
+        with card_col1:
+            with st.container(border=True):
+                st.markdown("#### Price Summary")
+                st.write("")
+                p1, p2 = st.columns(2)
+                p1.metric("TODAY'S HIGH", f"₹{format_inr(info.get('dayHigh', data['High'].iloc[-1]))}")
+                p2.metric("TODAY'S LOW", f"₹{format_inr(info.get('dayLow', data['Low'].iloc[-1]))}")
+                st.write("")
+                p3, p4 = st.columns(2)
+                p3.metric("52 WEEK HIGH", f"₹{format_inr(info.get('fiftyTwoWeekHigh', 0))}")
+                p4.metric("52 WEEK LOW", f"₹{format_inr(info.get('fiftyTwoWeekLow', 0))}")
+
+            with st.container(border=True):
+                st.markdown("#### DIG Quant Rating 🤖")
+                pe = info.get('trailingPE', 0)
+                if pe > 0 and pe < 20: st.success("🌟 **Valuation:** Highly Attractive")
+                elif pe >= 20 and pe < 40: st.info("⚖️ **Valuation:** Fairly Valued")
+                else: st.warning("⚠️ **Valuation:** Expensive")
+                
+                sma_trend = data['Close'].rolling(50).mean().iloc[-1]
+                if curr_price > sma_trend: st.success("📈 **Momentum:** Strong Bullish Breakout")
+                else: st.error("📉 **Momentum:** Bearish Consolidation Phase")
+
+        with card_col2:
+            with st.container(border=True):
+                st.markdown("#### Company Essentials")
+                st.write("")
+                e1, e2, e3 = st.columns(3)
+                e1.metric("MARKET CAP", f"₹{format_large_number(info.get('marketCap'))}")
+                e2.metric("ENTERPRISE VAL", f"₹{format_large_number(info.get('enterpriseValue'))}")
+                e3.metric("P/E RATIO", round(info.get('trailingPE', 0), 2) if info.get('trailingPE') else "N/A")
+                st.write("")
+                e4, e5, e6 = st.columns(3)
+                e4.metric("DIV. YIELD", f"{round(info.get('dividendYield', 0)*100, 2)}%" if info.get('dividendYield') else "0.00%")
+                e5.metric("BOOK VALUE", f"₹{format_inr(round(info.get('bookValue', 0), 2))}" if info.get('bookValue') else "N/A")
+                e6.metric("FACE VALUE", f"₹{info.get('regularMarketPrice', 1)}") 
+                st.write("")
+                e7, e8, e9 = st.columns(3)
+                e7.metric("DEBT", f"₹{format_large_number(info.get('totalDebt', 0))}")
+                e8.metric("ROE", f"{round(info.get('returnOnEquity', 0)*100, 2)}%" if info.get('returnOnEquity') else "N/A")
+                e9.metric("ROCE", f"{round(info.get('returnOnCapitalEmployed', 0)*100, 2)}%" if info.get('returnOnCapitalEmployed') else "N/A")
+
+        st.write("---")
+         # ISKE THEEK NICHE AAPKA PURANA 'tab1, tab2 = st.tabs(...)' WALA CODE HOGA
         
         tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["📊 Price Chart", "📋 Pro Ratios", "📑 Financials", "🏢 Corp Actions", "📰 Live News", "💎 AI Quant", "📥 Export", "🧑‍💼 CA's Audit"])
 
@@ -589,19 +651,19 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
 mega_footer = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-.premium-footer { background-color: #11141A; padding: 50px 20px 30px 20px; color: #A0AEC0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border-top: 1px solid #2D3748; margin-top: 60px; }
+.premium-footer { background-color: var(--secondary-background-color); padding: 50px 20px 30px 20px; color: var(--text-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border-top: 1px solid rgba(128,128,128,0.2); margin-top: 60px; }
 .footer-grid { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 40px; max-width: 1200px; margin-left: auto; margin-right: auto; }
 .footer-col { flex: 1; min-width: 200px; margin-bottom: 20px; }
 .footer-brand { flex: 1.6; padding-right: 40px; }
-.footer-col h4 { color: #E2E8F0; font-size: 16px; margin-bottom: 18px; font-weight: 600; letter-spacing: 0.5px; }
-.footer-col a { display: block; color: #A0AEC0; text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: 0.3s; }
-.footer-col a:hover { color: #D4AF37; padding-left: 5px; }
+.footer-col h4 { color: var(--text-color); font-size: 16px; margin-bottom: 18px; font-weight: 600; letter-spacing: 0.5px; opacity: 0.9;}
+.footer-col a { display: block; color: var(--text-color); text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: 0.3s; opacity: 0.7;}
+.footer-col a:hover { color: #1E88E5; padding-left: 5px; opacity: 1;}
 .social-icons { display: flex; gap: 15px; margin-top: 20px; }
-.social-icons a { display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background-color: #2D3748; border-radius: 50%; color: #E2E8F0 !important; font-size: 16px; transition: 0.3s; padding: 0 !important; }
-.social-icons a:hover { background-color: #D4AF37; color: #11141A !important; transform: translateY(-3px); }
-.footer-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid #2D3748; padding-top: 25px; font-size: 11px; line-height: 1.6; color: #718096; }
+.social-icons a { display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background-color: rgba(128,128,128,0.2); border-radius: 50%; color: var(--text-color) !important; font-size: 16px; transition: 0.3s; padding: 0 !important; }
+.social-icons a:hover { background-color: #1E88E5; color: white !important; transform: translateY(-3px); }
+.footer-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(128,128,128,0.2); padding-top: 25px; font-size: 11px; line-height: 1.6; color: var(--text-color); opacity: 0.6;}
 .footer-bottom p { margin: 6px 0; }
-.brand-title { color: #D4AF37; font-size: 22px; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
+.brand-title { color: #1E88E5; font-size: 22px; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
 .block-container { padding-bottom: 0rem !important; }
 </style>
 <div class="premium-footer">
@@ -646,5 +708,6 @@ mega_footer = """
 </div>
 """
 st.markdown(mega_footer, unsafe_allow_html=True)
+
 
 
