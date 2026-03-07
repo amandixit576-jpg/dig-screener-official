@@ -19,26 +19,41 @@ if 'current_view' not in st.session_state: st.session_state.current_view = "HOME
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity", "Hold Type"])
 
 # --- 2. CSS & BRANDING HIDE ---
+# --- 2. CSS & BRANDING HIDE (TOP NAV STYLING) ---
 hide_st_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    /* 1. RIGHT side ke buttons (Fork, GitHub, 3-dots) ko gayab karega */
     [data-testid="stToolbarActions"] {display: none !important;}
-    /* 2. LEFT side ka sidebar button (>>) hamesha ZINDA rakhega */
-    [data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; }
-    /* 3. NEECHE ke Red/Green logos aur Footer ko uda dega */
-    [data-testid="stStatusWidget"], [data-testid="stDecoration"], .viewerBadge_container__1QSob, footer { display: none !important; }
     
-    .block-container { padding-top: 0rem; padding-bottom: 2rem; max-width: 1200px; }
-    div[data-testid="stButton"] button { white-space: nowrap !important; border-radius: 8px !important; padding-left: 5px !important; padding-right: 5px !important; }
-    div[data-testid="stButton"] button p { font-size: 14px !important; }
+    /* LEFT SIDEBAR HAMESHA KE LIYE GAYAB */
+    [data-testid="collapsedControl"] { display: none !important; }
+    section[data-testid="stSidebar"] { display: none !important; }
+    
+    [data-testid="stStatusWidget"], [data-testid="stDecoration"], .viewerBadge_container__1QSob { display: none !important; }
+    
+    .block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1200px; }
+    
+    /* TOP NAV BUTTONS STYLING */
+    div[data-testid="column"] button[kind="secondary"] {
+        border: none !important;
+        background: transparent !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        color: #333 !important;
+        padding: 0px !important;
+    }
+    div[data-testid="column"] button[kind="secondary"]:hover {
+        color: #1E88E5 !important;
+    }
+    
+    /* Primary buttons (Account/Premium) */
+    div[data-testid="stButton"] button { white-space: nowrap !important; border-radius: 8px; padding-left: 10px; padding-right: 10px; }
+    
     .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: 'Arial Black', sans-serif; letter-spacing: -1px;}
     .sub-title { text-align: center; color: #E5A91E; font-size: 1.2rem; font-weight: 700; margin-top: 0px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;}
     .tag-line { text-align: center; color: #666; font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic;}
-    a { text-decoration: none !important; color: inherit !important; }
-    th { text-align: left !important; background-color: rgba(150, 150, 150, 0.1); }
     .basket-card { border: 1px solid #ddd; padding: 15px; border-radius: 10px; background: #f8f9fa; text-align: center; margin-bottom: 10px; height: 130px; }
     .basket-title { color: #1E88E5; font-weight: 700; font-size: 1.1rem; }
     .basket-card p { font-size: 0.9rem; color: #666; margin-top: 5px; }
@@ -116,16 +131,25 @@ def premium_signup():
     else:
         st.button("📲 Chat to get Code", type="primary", disabled=True, use_container_width=True)
 
-st.sidebar.markdown("<h3 style='color:#1E88E5;'>DIG Menu</h3>", unsafe_allow_html=True)
-if st.sidebar.button("🏠 Home Dashboard", use_container_width=True): st.session_state.current_view = "HOME"; st.rerun()
-if st.sidebar.button("🧺 Theme Baskets", use_container_width=True): st.session_state.current_view = "BASKETS"; st.rerun()
-if st.sidebar.button("⚖️ Peer Comparison", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
-if st.sidebar.button("📈 Mutual Funds", use_container_width=True): st.session_state.current_view = "MUTUAL_FUNDS"; st.rerun()
-st.sidebar.markdown("<br>", unsafe_allow_html=True)
-# NAYA LOGIN BUTTON YAHAN ADD HUA HAI 👇
-if st.sidebar.button("🔒 My Account", type="primary", use_container_width=True): st.session_state.current_view = "MY_ACCOUNT"; st.rerun()
-if st.sidebar.button("👑 Upgrade to Premium", use_container_width=True): premium_signup()
+# --- TOP NAVIGATION BAR (TICKER STYLE) ---
+nav1, nav2, nav3, nav4, nav5, nav6, nav7, nav8 = st.columns([1.5, 1, 1, 1, 1, 1.5, 1.5, 1.2])
 
+with nav1: st.markdown("<h4 style='color:#1E88E5; margin-top:5px; margin-bottom:0px;'>⚜️ DIG Terminal</h4>", unsafe_allow_html=True)
+with nav2: 
+    if st.button("Home", use_container_width=True): st.session_state.current_view = "HOME"; st.rerun()
+with nav3: 
+    if st.button("Compare", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
+with nav4: 
+    if st.button("MFs", use_container_width=True): st.session_state.current_view = "MUTUAL_FUNDS"; st.rerun()
+with nav5: 
+    if st.button("Baskets", use_container_width=True): st.session_state.current_view = "BASKETS"; st.rerun()
+with nav6: st.empty() 
+with nav7: 
+    if st.button("👑 Premium", use_container_width=True): premium_signup()
+with nav8: 
+    if st.button("🔒 Account", type="primary", use_container_width=True): st.session_state.current_view = "MY_ACCOUNT"; st.rerun()
+
+st.write("---")
 @st.cache_data(ttl=1800)
 def get_live_news(company_name):
     try:
@@ -622,4 +646,5 @@ mega_footer = """
 </div>
 """
 st.markdown(mega_footer, unsafe_allow_html=True)
+
 
