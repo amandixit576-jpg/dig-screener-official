@@ -857,7 +857,8 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             else: st.write("Data not available.")
 
     else:
-    st.warning("⚠️ Stock data unavailable right now. Try another NSE symbol like TCS, ITC, INFY.")
+        st.warning("⚠️ Stock data unavailable right now. Try another NSE symbol like TCS, ITC, INFY.")
+
 # --- 6. MEGA FOOTER ---
 mega_footer = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -948,6 +949,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
