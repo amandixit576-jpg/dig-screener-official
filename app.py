@@ -610,7 +610,7 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             st.text_area("📝 Auto-Generated Reel/Post Script (Copy-Paste Ready):", script, height=250)
             
             st.write("---")
-            report_df = pd.DataFrame({"Metric": ["Company", "Price", "P/E", "ROE", "Debt/Eq", "Analysis By"], "Value": [display_name, curr_price, info.get('trailingPE'), info.get('returnOnEquity'), info.get('debtToEquity'), "DIG Screener | 📸 @aman_creats"]})
+            report_df = pd.DataFrame({"Metric": ["Company", "Price", "P/E", "ROE", "Debt/Eq", "Analysis By"], "Value": [display_name, curr_price, info.get('trailingPE'), info.get('returnOnEquity'), info.get('debtToEquity'), "DIG Screener | 📸 @digscreener.in"]})
             st.download_button(label="📥 Download Branded CSV Report", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_AmanCreats_Report.csv", mime="text/csv", type="primary")
 
         with tab8:
@@ -727,6 +727,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
