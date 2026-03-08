@@ -297,30 +297,28 @@ if st.session_state.current_view == "HOME":
                 
             st.dataframe(display_df, use_container_width=True)
             st.caption("ℹ️ *Tax estimator reflects new Indian Budget rules: 20% for STCG and 12.5% for LTCG.*")
-
-# ---> 📊 STOCK ANALYSIS ENGINE (TICKER-STYLE UI) <---
+# =====================================================================
+# 🛑 ENGINE SHURU (Ye line ekdum LEFT WALL - 0 spaces par honi chahiye) 🛑
+# =====================================================================
 if st.session_state.current_view != "HOME":
     user_ticker = st.session_state.current_view
 
-    with st.spinner("Executing Quant Models..."):
+    # 1. DATA FETCHING (Ye hona bohot zaroori hai!)
+    with st.spinner(f"Fetching Institutional Data for {user_ticker}..."):
         data = fetch_stock_history(user_ticker)
         info = fetch_safe_info(user_ticker)
 
     # 🟢 ASLI ENGINE YAHAN SE SHURU HOTA HAI
     if data is not None and not data.empty:
         
-        # --- 🌟 FINOLOGY STYLE PREMIUM HEADER (DARK & GREEN THEME) ---
+        # --- 🌟 FINOLOGY STYLE PREMIUM HEADER ---
         company_name = info.get('longName', info.get('shortName', user_ticker.replace('.NS', '')))
         sector = info.get('sector', 'N/A')
         industry = info.get('industry', 'N/A')
         
-        # 1. The Breadcrumb Path (DIG Terminal > Company > Ticker)
         st.markdown(f"<span style='color: #888; font-size: 14px;'>DIG Terminal > Company > <b style='color: #00E570;'>{user_ticker.replace('.NS', '')} Share Price</b></span>", unsafe_allow_html=True)
-        
-        # 2. Big Bold Company Name
         st.markdown(f"<h1 style='margin-top: -10px; margin-bottom: 5px; font-size: 2.8rem;'>{company_name}</h1>", unsafe_allow_html=True)
         
-        # 3. Badges Row (NSE / Sector / Industry)
         st.markdown(f"""
         <div style='display: flex; gap: 12px; align-items: center; margin-bottom: 25px; flex-wrap: wrap;'>
             <span style='background-color: #1F2937; padding: 5px 10px; border-radius: 6px; font-size: 13px; color: #E5E7EB; border: 1px solid #374151;'>
@@ -713,6 +711,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
