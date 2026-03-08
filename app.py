@@ -343,14 +343,39 @@ if st.session_state.current_view != "HOME":
 
     # 🟢 ASLI ENGINE YAHAN SE SHURU HOTA HAI
     if data is not None and not data.empty:
+        
+        # --- 🌟 FINOLOGY STYLE PREMIUM HEADER (DARK & GREEN THEME) ---
+        company_name = info.get('longName', info.get('shortName', user_ticker.replace('.NS', '')))
+        sector = info.get('sector', 'N/A')
+        industry = info.get('industry', 'N/A')
+        
+        # 1. The Breadcrumb Path (DIG Terminal > Company > Ticker)
+        st.markdown(f"<span style='color: #888; font-size: 14px;'>DIG Terminal > Company > <b style='color: #00E570;'>{user_ticker.replace('.NS', '')} Share Price</b></span>", unsafe_allow_html=True)
+        
+        # 2. Big Bold Company Name
+        st.markdown(f"<h1 style='margin-top: -10px; margin-bottom: 5px; font-size: 2.8rem;'>{company_name}</h1>", unsafe_allow_html=True)
+        
+        # 3. Badges Row (NSE / Sector / Industry)
+        st.markdown(f"""
+        <div style='display: flex; gap: 12px; align-items: center; margin-bottom: 25px; flex-wrap: wrap;'>
+            <span style='background-color: #1F2937; padding: 5px 10px; border-radius: 6px; font-size: 13px; color: #E5E7EB; border: 1px solid #374151;'>
+                NSE: <b style='color: white;'>{user_ticker.replace('.NS', '')}</b>
+            </span>
+            <span style='background-color: #1F2937; padding: 5px 10px; border-radius: 6px; font-size: 13px; color: #E5E7EB; border: 1px solid #374151;'>
+                SECTOR: <b style='color: #00E570;'>{sector}</b>
+            </span>
+            <span style='background-color: #1F2937; padding: 5px 10px; border-radius: 6px; font-size: 13px; color: #E5E7EB; border: 1px solid #374151;'>
+                INDUSTRY: <b style='color: #00E570;'>{industry}</b>
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # --- PRICE CALCULATION ---
         curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
         chg = curr_price - prev_price
         pct = (chg/prev_price)*100
         color = "#16A34A" if chg >= 0 else "#DC2626"
         arrow = "▲" if chg >= 0 else "▼"
-
-        # --- TOP HEADER (FULL NAME + SYNC + FALLBACK) ---
-        display_name = info.get('longName', info.get('shortName', user_ticker.replace('.NS', '')))
 
         # 2. Smart Fallback: History-based calculation for N/A values
         hist_1y = fetch_stock_history(user_ticker, period="1y")
@@ -723,6 +748,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
