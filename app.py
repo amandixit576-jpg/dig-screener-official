@@ -463,20 +463,22 @@ elif st.session_state.current_view == "HOME":
     st.markdown('<p class="tag-line">The Modern AI-Powered Screener & Quant Terminal.</p>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        man_t = st.text_input("Search", placeholder="🔍 Type a Company Name or NSE Symbol (e.g., ITC)", label_visibility="collapsed")
-        if st.button("Search & Analyze", type="primary", use_container_width=True):
-
-    if man_t:
-
-        ticker = man_t.strip().upper()
-
-        if not ticker.endswith(".NS"):
-            ticker = ticker + ".NS"
-
-        st.session_state.current_view = ticker
-
-        st.rerun()
+with col2:
+    man_t = st.text_input("Search", placeholder="🔍 Type a Company Name or NSE Symbol (e.g., ITC)", label_visibility="collapsed")
+    
+    # 1. Sabse pehle button check karo
+    if st.button("Search & Analyze", type="primary", use_container_width=True):
+        # 2. Phir check karo ki input khali toh nahi hai (Indented inside the button)
+        if man_t:
+            ticker = man_t.strip().upper()
+            
+            # 3. NSE suffix check
+            if not ticker.endswith(".NS"):
+                ticker = ticker + ".NS"
+            
+            # 4. View update aur refresh
+            st.session_state.current_view = ticker
+            st.rerun()
         
         st.markdown("<br>", unsafe_allow_html=True)
         col_t1, col_t2 = st.columns([1, 4])
@@ -942,6 +944,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
