@@ -538,23 +538,28 @@ else:
         color = "#16A34A" if chg >= 0 else "#DC2626"
         arrow = "▲" if chg >= 0 else "▼"
         
-       # --- TOP HEADER (WITH CACHE BUSTER & SMART FALLBACK) ---
+       # --- TOP HEADER (FULL NAME + SYNC + FALLBACK) ---
         
-        # Smart Fallback: Agar Yahoo 52-Week High/Low na de, toh hum khud calculate kar lenge history se!
+        # 1. Full Company Name Extraction
+        display_name = info.get('longName', info.get('shortName', user_ticker.replace('.NS', '')))
+
+        # 2. Smart Fallback: History-based calculation for N/A values
         hist_1y = fetch_stock_history(user_ticker, period="1y")
         if not hist_1y.empty:
             if not info.get('fiftyTwoWeekHigh'): info['fiftyTwoWeekHigh'] = hist_1y['High'].max()
             if not info.get('fiftyTwoWeekLow'): info['fiftyTwoWeekLow'] = hist_1y['Low'].min()
 
         c1, c2 = st.columns([3, 1])
+        
+        # Left Side: Name and Sync Button
         c1.markdown(f"<h1 style='margin-bottom: 0px;'>{display_name}</h1>", unsafe_allow_html=True)
         c1.caption(f"NSE: **{user_ticker.replace('.NS','')}** | Sector: **{info.get('sector', 'N/A')}**")
         
-        # 🔥 YE HAI WOH JADUI BUTTON 🔥
-        if c1.button("🔄 Refresh API Data", help="Click if you see N/A or 0.0 values"):
+        if c1.button("🔄 Sync Live Data", help="Click to force refresh financial metrics and company info"):
             st.cache_data.clear()
             st.rerun()
         
+        # Right Side: Price and Percentage (Intact as per your code)
         c2.markdown(f"<h2 style='text-align: right; margin-bottom: 0px;'>₹{format_inr(round(curr_price, 2))}</h2>", unsafe_allow_html=True)
         c2.markdown(f"<p style='text-align: right; color: {color}; font-weight: bold;'>{arrow} {format_inr(round(chg,2))} ({round(pct,2)}%)</p>", unsafe_allow_html=True)
 
@@ -908,6 +913,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
