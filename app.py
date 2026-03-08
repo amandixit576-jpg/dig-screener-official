@@ -34,9 +34,10 @@ st.markdown(seo_meta_tags, unsafe_allow_html=True)
 if 'current_view' not in st.session_state: st.session_state.current_view = "HOME"
 if 'portfolio' not in st.session_state: st.session_state.portfolio = pd.DataFrame(columns=["Ticker", "Buy Price", "Quantity", "Hold Type"])
 
-# --- 2. CSS & ADAPTIVE THEME (LIGHT/DARK FRIENDLY) ---
+# --- 2. CSS & ADAPTIVE THEME (CYBER-TERMINAL NEON) ---
 hide_st_style = """
     <style>
+    /* 🔥 1. YAHAN AAPKA PURANA HIDE KARNE WALA CODE EKDUM SAFE HAI 🔥 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -44,7 +45,6 @@ hide_st_style = """
     [data-testid="collapsedControl"] { display: none !important; }
     section[data-testid="stSidebar"] { display: none !important; }
     
-    /* 🔥 YE NAYI LINES ADD HUI HAIN LOGOS KO HIDE KARNE KE LIYE 🔥 */
     [data-testid="stAppDeployButton"] { display: none !important; }
     .stAppDeployButton { display: none !important; }
     div[class^="viewerBadge_container"] { display: none !important; }
@@ -53,29 +53,69 @@ hide_st_style = """
     
     .block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1200px; }
     
-    /* ADAPTIVE NAV BUTTONS */
+    /* 🟢 2. YAHAN SE NAYI THEME SHURU (OBSIDIAN & NEON) 🟢 */
+    /* Global Background */
+    .stApp {
+        background-color: #0B0E14 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* TOP NAV BUTTONS (Neon Outline) */
     div[data-testid="column"] button[kind="secondary"] {
-        border: none !important;
+        border: 1px solid rgba(57, 255, 20, 0.4) !important;
         background: transparent !important;
         font-weight: 600 !important;
         font-size: 16px !important;
-        padding: 0px !important;
-        color: var(--text-color) !important;
+        padding: 5px 15px !important;
+        color: #39FF14 !important; /* Neon Green */
+        border-radius: 6px !important;
+        transition: 0.3s;
     }
     div[data-testid="column"] button[kind="secondary"]:hover {
-        color: #1E88E5 !important;
+        border-color: #39FF14 !important;
+        background: rgba(57, 255, 20, 0.1) !important;
+        box-shadow: 0px 0px 12px rgba(57, 255, 20, 0.3);
+        color: #39FF14 !important;
     }
     
-    div[data-testid="stButton"] button { white-space: nowrap !important; border-radius: 8px; padding-left: 10px; padding-right: 10px; }
+    /* Account/Primary Button (Solid Green) */
+    div[data-testid="stButton"] button[kind="primary"] { 
+        white-space: nowrap !important; 
+        border-radius: 8px; 
+        padding-left: 10px; 
+        padding-right: 10px; 
+        background-color: #39FF14 !important;
+        color: #0B0E14 !important;
+        font-weight: bold !important;
+        border: none !important;
+    }
     
-    /* ADAPTIVE TEXT COLORS */
-    .main-title { text-align: center; color: #1E88E5; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: 'Arial Black', sans-serif; letter-spacing: -1px;}
-    .sub-title { text-align: center; color: #E5A91E; font-size: 1.2rem; font-weight: 700; margin-top: 0px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;}
-    .tag-line { text-align: center; color: var(--text-color); font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic; opacity: 0.7;}
+    /* TEXT COLORS */
+    .main-title { text-align: center; color: #39FF14 !important; font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; font-family: 'Arial Black', sans-serif; letter-spacing: -1.5px; text-shadow: 0px 0px 20px rgba(57, 255, 20, 0.3);}
+    .sub-title { text-align: center; color: #FFFFFF !important; font-size: 1.2rem; font-weight: 700; margin-top: 0px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9;}
+    .tag-line { text-align: center; color: #A0AEC0 !important; font-size: 1rem; font-weight: 500; margin-top: 0px; margin-bottom: 30px; font-style: italic;}
     
-    .basket-card { border: 1px solid rgba(128,128,128,0.2); padding: 15px; border-radius: 10px; background: var(--secondary-background-color); text-align: center; margin-bottom: 10px; height: 130px; }
-    .basket-title { color: #1E88E5; font-weight: 700; font-size: 1.1rem; }
-    .basket-card p { font-size: 0.9rem; color: var(--text-color); margin-top: 5px; opacity: 0.8;}
+    /* THEME BASKETS (Dark Box + Green Hover) */
+    .basket-card { border: 1px solid rgba(57, 255, 20, 0.2); padding: 15px; border-radius: 10px; background: #161B22 !important; text-align: center; margin-bottom: 10px; height: 130px; transition: 0.3s;}
+    .basket-card:hover { border-color: #39FF14; transform: translateY(-3px); }
+    .basket-title { color: #39FF14 !important; font-weight: 700; font-size: 1.1rem; }
+    .basket-card p { font-size: 0.9rem; color: #FFFFFF !important; margin-top: 5px; opacity: 0.8;}
+
+    /* COMPANY METRICS (Institutional Style) */
+    div[data-testid="stMetric"] {
+        background-color: #161B22 !important;
+        padding: 15px; 
+        border-radius: 10px;
+        border-left: 5px solid #39FF14 !important;
+    }
+    div[data-testid="stMetricValue"] > div { color: #39FF14 !important; }
+
+    /* TABS STYLING */
+    button[data-baseweb="tab"] { color: #A0AEC0 !important; border-bottom: 2px solid transparent !important; }
+    button[aria-selected="true"] { 
+        color: #39FF14 !important; 
+        border-bottom-color: #39FF14 !important; 
+    }
     </style>
 """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -731,6 +771,7 @@ mega_footer = """
 </div>
 """
 st.markdown(mega_footer, unsafe_allow_html=True)
+
 
 
 
