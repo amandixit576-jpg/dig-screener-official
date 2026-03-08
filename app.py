@@ -303,10 +303,26 @@ if st.session_state.current_view == "HOME":
 if st.session_state.current_view != "HOME":
     user_ticker = st.session_state.current_view
 
-    # 1. DATA FETCHING (Ye hona bohot zaroori hai!)
+    # 🛡️ BULLETPROOF DATA FETCHING (ANTI-BLOCK)
     with st.spinner(f"Fetching Institutional Data for {user_ticker}..."):
-        data = fetch_stock_history(user_ticker)
-        info = fetch_safe_info(user_ticker)
+        import yfinance as yf
+        import requests
+        
+        # Ek fake browser session banayenge taaki Yahoo block na kare
+        session = requests.Session()
+        session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36'})
+        
+        tkr = yf.Ticker(user_ticker, session=session)
+        
+        try:
+            data = tkr.history(period="1y")
+        except:
+            data = None
+            
+        try:
+            info = tkr.info
+        except:
+            info = {}
 
     # 🟢 ASLI ENGINE YAHAN SE SHURU HOTA HAI
     if data is not None and not data.empty:
@@ -711,6 +727,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
