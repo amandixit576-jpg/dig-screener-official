@@ -150,34 +150,35 @@ def format_df_to_crores(df):
 
 import requests
 
-# 1. Create a "Smart Session" to bypass Yahoo's block
+# --- PRO DATA ENGINE (ANTI-BLOCK) ---
+# Ek "Human-like" session banate hain taaki Yahoo block na kare
 session = requests.Session()
 session.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 })
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_safe_info(ticker_symbol):
     try:
-        ticker = yf.Ticker(ticker_symbol, session=session) # Use session here
-        info = ticker.info
-        # Backup: Agar info abhi bhi khali hai, toh history se basic cheezein nikal lo
-        if not info or len(info) < 5:
-            hist = ticker.history(period="1d")
-            if not hist.empty:
-                info['currentPrice'] = hist['Close'].iloc[-1]
-                info['regularMarketPreviousClose'] = hist['Open'].iloc[-1]
-        return info
-    except:
-        return {}
+        t = yf.Ticker(ticker_symbol, session=session)
+        inf = t.info
+        # Backup Check: Agar info khali hai, toh retry with fresh session
+        if not inf or len(inf) < 10:
+            st.cache_data.clear() # Cache saaf karo taaki fresh koshish ho
+        return inf if inf else {}
+    except: return {}
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_stock_history(ticker_symbol, period="1y"):
     try:
-        ticker = yf.Ticker(ticker_symbol, session=session) # Use session here
-        return ticker.history(period=period)
-    except:
-        return pd.DataFrame()
+        t = yf.Ticker(ticker_symbol, session=session)
+        df = t.history(period=period)
+        # Agar 1y ka data na mile, toh kam se kam 1 mahine ka mangwao
+        if df.empty:
+            df = t.history(period="1mo")
+        return df
+    except: return pd.DataFrame()
 
 @st.cache_data(ttl=86400, show_spinner=False)
 def fetch_financials(ticker_symbol):
@@ -933,6 +934,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
