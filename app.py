@@ -558,24 +558,20 @@ with col2:
 # ---> 📊 STOCK ANALYSIS ENGINE (TICKER-STYLE UI) <---
 else:
     user_ticker = st.session_state.current_view
-    
+
     with st.spinner("Executing Quant Models..."):
         data = fetch_stock_history(user_ticker)
         info = fetch_safe_info(user_ticker)
-        
-    display_name = info.get('longName', info.get('shortName', user_ticker.replace('.NS', '')))
 
+    # 🟢 ASLI ENGINE YAHAN SE SHURU HOTA HAI
     if data is not None and not data.empty:
-        # --- TOP HEADER SECTION ---
-        # (Yahan aapka price aur metrics wala code aayega)
-        st.write("Analysis for " + display_name)
-    else:
-        # 🔥 YAHAN GADBAD THI: Is line ko 'else' ke niche indent karo
-        st.warning("⚠️ Stock data unavailable right now. Try another NSE symbol like TCS, ITC, INFY.")
-        
-       # --- TOP HEADER (FULL NAME + SYNC + FALLBACK) ---
-        
-        # 1. Full Company Name Extraction
+        curr_price, prev_price = data['Close'].iloc[-1], data['Close'].iloc[-2]
+        chg = curr_price - prev_price
+        pct = (chg/prev_price)*100
+        color = "#16A34A" if chg >= 0 else "#DC2626"
+        arrow = "▲" if chg >= 0 else "▼"
+
+        # --- TOP HEADER (FULL NAME + SYNC + FALLBACK) ---
         display_name = info.get('longName', info.get('shortName', user_ticker.replace('.NS', '')))
 
         # 2. Smart Fallback: History-based calculation for N/A values
@@ -948,6 +944,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
