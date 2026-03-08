@@ -192,28 +192,30 @@ def get_live_news(company_name):
 # ---> 🏠 HOME PAGE <---
 if st.session_state.current_view == "HOME":
     
-    # --- 🌟 FINOLOGY STYLE HERO SECTION ---
+    # --- 🌟 THE DIG PREMIUM HERO SECTION ---
     st.write("<br><br>", unsafe_allow_html=True) 
-    st.markdown("<h1 style='text-align: center; color: #1E88E5; font-size: 3rem;'>Investing Ka Search Engine</h1>", unsafe_allow_html=True)
-    st.markdown("<h4 style='text-align: center; color: #555; font-weight: normal;'>The Modern Stock Screener that helps you pick better stocks.</h4>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1E88E5; font-size: 3.5rem;'>⚜️ Dixit Investment Group</h1>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #888; font-weight: normal;'>The Modern Stock Screener that helps you pick better stocks.</h4>", unsafe_allow_html=True)
     st.write("<br>", unsafe_allow_html=True)
 
-    # 🔍 BIG CENTERED SEARCH BAR
+    # 🔍 SINGLE BIG SEARCH BAR + GREEN BUTTON
     c1, search_col, c3 = st.columns([1, 2, 1])
     with search_col:
-        search_input = st.text_input("Search", label_visibility="collapsed", placeholder="🔍 Type a Company Name (e.g. ITC) to Search...")
-        if search_input: # Jaise hi user Enter dabayega
-            sym = search_input.upper().strip()
-            if not sym.endswith('.NS'): 
-                sym += '.NS'
-            st.session_state.current_view = sym
-            st.rerun() # Ye line page ko refresh karke Stock Page par le jayegi!
+        search_input = st.text_input("Search", label_visibility="collapsed", placeholder="🔍 Type a Company Name or NSE Symbol (e.g., ITC)")
+        
+        # Ye 'type="primary"' aapke button ko wahi mast Green color dega!
+        if st.button("Search & Analyze", type="primary", use_container_width=True):
+            if search_input: 
+                sym = search_input.upper().strip()
+                if not (sym.endswith('.NS') or sym.endswith('.BO')): 
+                    sym += '.NS'
+                st.session_state.current_view = sym
+                st.rerun()
+            else:
+                st.warning("Bhai, pehle company ka naam toh likho!")
 
-    # 🔘 TRENDING BUTTONS (Neeche wale)
-    st.write("<div style='text-align: center; margin-top: 10px; color: #666;'><b>What's Trending:</b></div>", unsafe_allow_html=True)
-    st.write("<br>", unsafe_allow_html=True)
-    
-    # Center mein buttons laane ke liye empty columns ka use kiya hai
+    # 🔘 TRENDING BUTTONS (Ab click karne pe mast kaam karenge)
+    st.write("<div style='text-align: center; margin-top: 15px; color: #888;'><b>What's Trending:</b></div>", unsafe_allow_html=True)
     t_spacer1, t_btn1, t_btn2, t_btn3, t_btn4, t_spacer2 = st.columns([2, 1, 1, 1, 1, 2])
     
     with t_btn1: 
@@ -235,7 +237,8 @@ if st.session_state.current_view == "HOME":
             
     st.write("<br><br><hr>", unsafe_allow_html=True)
     
-    # 👇 Yahan se neeche aapka purana SIP Planner aur Virtual Portfolio wala code waise hi chalega...
+    # 👇 Yahan se aapke SIP Planner aur Portfolio ke Tabs shuru honge
+    
     
   # --- SEARCH ENGINE BLOCK ---
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -331,11 +334,7 @@ with col2:
             st.caption("ℹ️ *Tax estimator reflects new Indian Budget rules: 20% for STCG and 12.5% for LTCG.*")
 
 # ---> 📊 STOCK ANALYSIS ENGINE (TICKER-STYLE UI) <---
-if st.session_state.current_view not in ["HOME", "COMPARE", "MUTUAL_FUNDS", "BASKETS", "MY_ACCOUNT"]:
-    user_ticker = st.session_state.current_view
-
-    with st.spinner("Executing Quant Models..."):
-        data = fetch_stock_history(user_ticker)
+elif st.session_state.current_view != "HOME":
     user_ticker = st.session_state.current_view
 
     with st.spinner("Executing Quant Models..."):
@@ -724,6 +723,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
