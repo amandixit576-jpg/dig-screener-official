@@ -8,6 +8,9 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 import pandas as pd
+# 🔥 NAYE MODULAR IMPORTS 🔥
+from services.stock_data import fetch_safe_info, fetch_stock_history, fetch_financials
+from utils.formatters import format_inr, format_large_number, format_df_to_crores
 
 # --- 1. PAGE SETUP & MEMORY ---
 # Purana: page_icon="📈"
@@ -118,73 +121,7 @@ hide_st_style = """
 """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# --- HELPER FUNCTIONS ---
-def format_inr(number):
-    if pd.isna(number) or number is None: return "N/A"
-    try:
-        is_negative = number < 0
-        number = abs(number)
-        s, *d = str(round(float(number), 2)).partition(".")
-        r = ",".join([s[x-2:x] for x in range(-3, -len(s), -2)][::-1] + [s[-3:]])
-        formatted_num = "".join([r] + d) if r else s
-        return f"-{formatted_num}" if is_negative else formatted_num
-    except: return str(number)
-
-def format_large_number(number):
-    if pd.isna(number) or number is None: return "N/A"
-    try:
-        num = float(number)
-        if num >= 10000000: return f"{format_inr(round(num / 10000000, 2))} Cr"
-        elif num >= 100000: return f"{format_inr(round(num / 100000, 2))} L"
-        else: return format_inr(num)
-    except: return str(number)
-
-def format_df_to_crores(df):
-    if df is None or df.empty: return df
-    formatted = df.copy()
-    for col in formatted.columns:
-        formatted[col] = pd.to_numeric(formatted[col], errors='coerce')
-        formatted[col] = formatted[col].apply(lambda x: f"{format_inr(round(x / 10000000, 2))}" if pd.notna(x) else "N/A")
-    formatted.columns = [str(c).split(' ')[0] for c in formatted.columns]
-    return formatted
-
 import requests
-
-# --- PRO DATA ENGINE (ANTI-BLOCK) ---
-# Ek "Human-like" session banate hain taaki Yahoo block na kare
-session = requests.Session()
-session.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-})
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def fetch_safe_info(ticker_symbol):
-    try:
-        t = yf.Ticker(ticker_symbol, session=session)
-        inf = t.info
-        # Backup Check: Agar info khali hai, toh retry with fresh session
-        if not inf or len(inf) < 10:
-            st.cache_data.clear() # Cache saaf karo taaki fresh koshish ho
-        return inf if inf else {}
-    except: return {}
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def fetch_stock_history(ticker_symbol, period="1y"):
-    try:
-        t = yf.Ticker(ticker_symbol, session=session)
-        df = t.history(period=period)
-        # Agar 1y ka data na mile, toh kam se kam 1 mahine ka mangwao
-        if df.empty:
-            df = t.history(period="1mo")
-        return df
-    except: return pd.DataFrame()
-
-@st.cache_data(ttl=86400, show_spinner=False)
-def fetch_financials(ticker_symbol):
-    t = yf.Ticker(ticker_symbol)
-    try: return t.financials, t.balance_sheet
-    except: return pd.DataFrame(), pd.DataFrame()
 
 # --- 3. TOP MARKET BAR ---
 @st.cache_data(ttl=300)
@@ -226,18 +163,20 @@ nav1, nav2, nav3, nav4, nav5, nav6, nav7, nav8 = st.columns([1.5, 1, 1, 1, 1, 1.
 
 with nav1: st.markdown("<h4 style='color:#1E88E5; margin-top:5px; margin-bottom:0px;'>⚜️ DIG Terminal</h4>", unsafe_allow_html=True)
 with nav2: 
-    if st.button("Home", use_container_width=True): st.session_state.current_view = "HOME"; st.rerun()
+    if st.button("Home", use_container_width=True): 
+        st.session_state.current_view = "HOME"
+        st.rerun()
 with nav3: 
-    if st.button("Compare", use_container_width=True): st.session_state.current_view = "COMPARE"; st.rerun()
+    if st.button("Compare", use_container_width=True): st.switch_page("pages/1_Compare.py")
 with nav4: 
-    if st.button("MFs", use_container_width=True): st.session_state.current_view = "MUTUAL_FUNDS"; st.rerun()
+    if st.button("MFs", use_container_width=True): st.switch_page("pages/2_Mutual_Funds.py")
 with nav5: 
-    if st.button("Baskets", use_container_width=True): st.session_state.current_view = "BASKETS"; st.rerun()
+    if st.button("Baskets", use_container_width=True): st.switch_page("pages/3_Baskets.py")
 with nav6: st.empty() 
 with nav7: 
     if st.button("👑 Premium", use_container_width=True): premium_signup()
 with nav8: 
-    if st.button("🔒 Account", type="primary", use_container_width=True): st.session_state.current_view = "MY_ACCOUNT"; st.rerun()
+    if st.button("🔒 Account", type="primary", use_container_width=True): st.switch_page("pages/4_Premium_Account.py")
 
 st.write("---")
 @st.cache_data(ttl=1800)
@@ -949,6 +888,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
