@@ -190,7 +190,7 @@ def get_live_news(company_name):
 # --- 5. APP SECTIONS ---
 
 # ---> 🏠 HOME PAGE <---
-elif st.session_state.current_view == "HOME":
+if st.session_state.current_view == "HOME":
     st.markdown('<h1 class="main-title">DIXIT INVESTMENT GROUP</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">A Premium Wealth and Portfolio Management Co.</p>', unsafe_allow_html=True)
     st.markdown('<p class="tag-line">The Modern AI-Powered Screener & Quant Terminal.</p>', unsafe_allow_html=True)
@@ -682,6 +682,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
