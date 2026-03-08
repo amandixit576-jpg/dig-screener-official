@@ -244,7 +244,7 @@ if st.session_state.current_view == "HOME":
 col1, col2, col3 = st.columns([1, 2, 1])
 
 with col2:
-    man_t = st.text_input("Search", placeholder="🔍 Type a Company Name or NSE Symbol (e.g., ITC)", label_visibility="collapsed")
+    man_t = st.text_input("Search", placeholder="🔍 Type a Company Name or NSE Symbol (e.g., ITC)", label_visibility="collapsed", key="search_bar_analysis")
     
     # LEVEL 1: Button check
     if st.button("Search & Analyze", type="primary", use_container_width=True):
@@ -748,6 +748,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
