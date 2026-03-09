@@ -139,7 +139,7 @@ def premium_signup():
 # --- TOP NAVIGATION BAR (TICKER STYLE) ---
 nav1, nav2, nav3, nav4, nav5, nav6, nav7, nav8 = st.columns([1.5, 1, 1, 1, 1, 1.5, 1.5, 1.2])
 
-with nav1: st.markdown("<h4 style='color:#1E88E5; margin-top:5px; margin-bottom:0px;'>⚜️ DIG Terminal</h4>", unsafe_allow_html=True)
+with nav1: st.markdown("<a href='/' target='_self' style='text-decoration: none;'><h4 style='color:#1E88E5; margin-top:5px; margin-bottom:0px;'>⚜️ DIG</h4></a>", unsafe_allow_html=True)
 with nav2: 
     if st.button("Home", use_container_width=True): 
         st.session_state.current_view = "HOME"
@@ -703,6 +703,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
