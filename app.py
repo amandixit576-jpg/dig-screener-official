@@ -666,7 +666,7 @@ mega_footer = """
 </div>
 <div class="footer-col">
 <h4>Company</h4>
-<a href="https://www.linkedin.com/in/amandixit29" target="_blank">About Us</a>
+<a href="/About_Us" target="_self">About Us</a>
 <a href="#">Our Vision</a>
 <a href="#">Leadership</a>
 <a href="#">Careers</a>
@@ -723,6 +723,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
