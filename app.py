@@ -665,25 +665,25 @@ mega_footer = """
 </div>
 </div>
 <div class="footer-col">
-<h4>Company</h4>
-<a href="/About_Us" target="_self">About Us</a>
-<a href="#">Our Vision</a>
-<a href="#">Leadership</a>
-<a href="#">Careers</a>
+  <h4>Company</h4>
+  <a href="/About_Us" target="_self">About Us</a>
+  <a href="/Our_Vision" target="_self">Our Vision</a>
+  <a href="/Leadership" target="_self">Leadership</a>
+  <a href="/Careers" target="_self">Careers</a>
 </div>
 <div class="footer-col">
-<h4>Terminal Tools</h4>
-<a href="#">Market Dashboard</a>
-<a href="#">Stock Screener</a>
-<a href="#">SIP Goal Planner</a>
-<a href="#">Tax Audit & Portfolio</a>
+  <h4>Terminal Tools</h4>
+  <a href="/" target="_self">Market Dashboard</a>
+  <a href="/" target="_self">Stock Screener</a>
+  <a href="/" target="_self">SIP Goal Planner</a>
+  <a href="/" target="_self">Tax Audit & Portfolio</a>
 </div>
 <div class="footer-col">
-<h4>Legal & Support</h4>
-<a href="#">Help Center</a>
-<a href="#">Privacy Policy</a>
-<a href="#">Terms of Use</a>
-<a href="#">Regulatory Disclaimer</a>
+  <h4>Legal & Support</h4>
+  <a href="/Help_Center" target="_self">Help Center</a>
+  <a href="/Privacy_Policy" target="_self">Privacy Policy</a>
+  <a href="/Terms_of_Use" target="_self">Terms of Use</a>
+  <a href="/Regulatory_Disclaimer" target="_self">Regulatory Disclaimer</a>
 </div>
 </div>
 <div class="footer-bottom">
@@ -723,6 +723,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
