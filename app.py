@@ -362,8 +362,7 @@ if st.session_state.current_view != "HOME":
         c1, c2 = st.columns([3, 1])
         
         # Left Side: Name and Sync Button
-        c1.markdown(f"<h1 style='margin-bottom: 0px;'>{display_name}</h1>", unsafe_allow_html=True)
-        c1.caption(f"NSE: **{user_ticker.replace('.NS','')}** | Sector: **{info.get('sector', 'N/A')}**")
+        
         
         if c1.button("🔄 Sync Live Data", help="Click to force refresh financial metrics and company info"):
             st.cache_data.clear()
@@ -724,6 +723,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
