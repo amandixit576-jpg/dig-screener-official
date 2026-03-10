@@ -189,6 +189,46 @@ with nav8:
     if st.button("🔒 Account", type="primary", use_container_width=True): st.switch_page("pages/4_Premium_Account.py")
 
 st.write("---")
+st.write("---")
+        
+        # --- 🌍 GLOBAL LIVE MARKET TICKER ---
+        @st.cache_data(ttl=300) # Data ko 5 minute tak cache karega taaki site fast rahe
+        def fetch_live_ticker():
+            # Duniya ke top indices aur unke Yahoo Finance symbols
+            indices = {
+                "NIFTY 50": "^NSEI", 
+                "SENSEX": "^BSESN", 
+                "NASDAQ": "^IXIC", 
+                "GOLD": "GC=F", 
+                "USD/INR": "INR=X"
+            }
+            html_str = ""
+            for name, symbol in indices.items():
+                try:
+                    tk = yf.Ticker(symbol)
+                    cp = tk.fast_info['lastPrice']
+                    pc = tk.fast_info['previousClose']
+                    chg = cp - pc
+                    pct = (chg / pc) * 100
+                    color = "#00E570" if chg >= 0 else "#FF4B4B" # Green if up, Red if down
+                    arrow = "▲" if chg >= 0 else "▼"
+                    html_str += f"<span style='margin: 0 40px; font-family: monospace; font-size: 15px; color: #E5E7EB;'><b>{name}</b> <span style='color: {color};'>{cp:,.2f} {arrow} {abs(pct):.2f}%</span></span>"
+                except:
+                    pass
+            return html_str
+            
+        ticker_data = fetch_live_ticker()
+        
+        # Patti ko chalane wala HTML & CSS Code
+        if ticker_data:
+            st.markdown(f"""
+            <div style="background-color: #000000; padding: 10px 0; border-top: 1px solid #374151; border-bottom: 1px solid #374151; margin-bottom: 25px;">
+                <marquee direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
+                    {ticker_data}
+                </marquee>
+            </div>
+            """, unsafe_allow_html=True)
+        # ------------------------------------
 @st.cache_data(ttl=1800)
 def get_live_news(company_name):
     try:
@@ -758,6 +798,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
