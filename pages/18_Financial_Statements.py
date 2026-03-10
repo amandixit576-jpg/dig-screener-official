@@ -3,6 +3,12 @@ import yfinance as yf
 import pandas as pd
 
 st.set_page_config(page_title="Financial Statements | DIG", page_icon="📚", layout="wide")
+# --- HIDE DEFAULT STREAMLIT SIDEBAR MENU ---
+st.markdown("""
+    <style>
+        [data-testid="stSidebarNav"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
 
 st.write("<br>", unsafe_allow_html=True)
 st.markdown("<h1 style='color: #1E88E5;'>📚 Historical Financials & P&L</h1>", unsafe_allow_html=True)
