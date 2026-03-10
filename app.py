@@ -457,41 +457,50 @@ if st.session_state.current_view != "HOME":
                 st.write("")
                 e1, e2, e3 = st.columns(3)
             
-            # Market Cap & EV ko seedha Crores (Cr) mein convert kiya taaki text na kate
             mcap = info.get('marketCap', 0)
             e1.metric("MARKET CAP", f"₹{mcap/10000000:,.0f} Cr" if mcap else "N/A")
             
             eval_val = info.get('enterpriseValue', 0)
             e2.metric("ENTERPRISE VAL", f"₹{eval_val/10000000:,.0f} Cr" if eval_val else "N/A")
             
-            pe = info.get('trailingPE')
+            # Agar PE nahi milta toh Forward PE use karega
+            pe = info.get('trailingPE', info.get('forwardPE'))
             e3.metric("P/E RATIO", round(pe, 2) if pe else "N/A")
             
             st.write("")
             e4, e5, e6 = st.columns(3)
             
-            div_yield = info.get('dividendYield')
-            e4.metric("DIV. YIELD", f"{round(div_yield * 100, 2)}%" if div_yield else "0.00%")
+            # 🧠 SMART DIVIDEND YIELD LOGIC
+            # Seedha Rate/Price = Real Yield (No more 469% errors)
+            div_rate = info.get('dividendRate')
+            cp = info.get('currentPrice', info.get('previousClose', 1))
+            if div_rate and cp:
+                e4.metric("DIV. YIELD", f"{round((div_rate/cp)*100, 2)}%")
+            else:
+                div_y = info.get('dividendYield', 0)
+                # Agar API ne already multiply karke bheja h (>1), toh multiply mat karo
+                e4.metric("DIV. YIELD", f"{round(div_y if div_y > 1 else div_y * 100, 2)}%" if div_y else "0.00%")
             
             bv = info.get('bookValue')
             e5.metric("BOOK VALUE", f"₹{round(bv, 2)}" if bv else "N/A")
             
-            # Yahan asali galti thi! Face value hata kar ab hum EPS dikha rahe hain
-            eps = info.get('trailingEPS')
+            # 🧠 MULTI-KEY EPS (Case sensitive issue fixed)
+            eps = info.get('trailingEps', info.get('trailingEPS', info.get('forwardEps')))
             e6.metric("EPS (TTM)", f"₹{round(eps, 2)}" if eps else "N/A")
             
             st.write("")
             e7, e8, e9 = st.columns(3)
             
-            # Debt ko bhi Crores (Cr) mein dikhayenge
             debt = info.get('totalDebt', 0)
             e7.metric("DEBT", f"₹{debt/10000000:,.0f} Cr" if debt else "N/A")
             
+            # 🧠 ROE & ROCE SMART FALLBACKS
             roe = info.get('returnOnEquity')
-            e8.metric("ROE", f"{round(roe * 100, 2)}%" if roe else "N/A")
+            e8.metric("ROE", f"{round(roe if roe > 1 else roe * 100, 2)}%" if roe else "N/A")
             
-            roce = info.get('returnOnCapitalEmployed')
-            e9.metric("ROCE", f"{round(roce * 100, 2)}%" if roce else "N/A")
+            # ROCE normally miss hota hai, toh uski jagah ROA (Return on Assets) dikhayega
+            roce = info.get('returnOnCapitalEmployed', info.get('returnOnAssets'))
+            e9.metric("ROCE", f"{round(roce if roce > 1 else roce * 100, 2)}%" if roce else "N/A")
 
         st.write("---")
         data['SMA50'] = data['Close'].rolling(50).mean()
@@ -799,6 +808,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
