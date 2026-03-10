@@ -142,6 +142,32 @@ def premium_signup():
     else:
         st.button("📲 Chat to get Code", type="primary", disabled=True, use_container_width=True)
 
+# --- 🎨 TOP NAVBAR PREMIUM STYLING ---
+        st.markdown("""
+            <style>
+                /* 1. Sabko ek dum Straight Line mein align karna */
+                div[data-testid="stHorizontalBlock"]:has(h4) {
+                    align-items: center !important;
+                }
+                
+                /* 2. Left options se OVAL boxes hatana (Unhe text banana) */
+                div[data-testid="stHorizontalBlock"]:has(h4) button[kind="secondary"] {
+                    background-color: transparent !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    color: #a1a1aa !important; /* Premium Gray Color */
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    padding: 0px !important;
+                }
+                
+                /* 3. Mouse laane par text chamkega (Hover Effect) */
+                div[data-testid="stHorizontalBlock"]:has(h4) button[kind="secondary"]:hover {
+                    color: #ffffff !important; /* Bright White */
+                    background-color: transparent !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
 # --- TOP NAVIGATION BAR (TICKER STYLE) ---
 nav1, nav2, nav3, nav4, nav5, nav6, nav7, nav8 = st.columns([1.5, 1, 1, 1, 1, 1.5, 1.5, 1.2])
 
@@ -732,6 +758,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
