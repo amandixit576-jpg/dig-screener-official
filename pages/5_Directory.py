@@ -2,6 +2,12 @@ import streamlit as st
 
 # Setup Page
 st.set_page_config(page_title="Stocks Directory | DIG", page_icon="🗂️", layout="wide")
+# --- HIDE DEFAULT STREAMLIT SIDEBAR MENU ---
+st.markdown("""
+    <style>
+        [data-testid="stSidebarNav"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
 
 # --- 🌟 HEADER SECTION ---
 st.markdown("<h1 style='color:#1E88E5;'>🗂️ Stocks Directory</h1>", unsafe_allow_html=True)
