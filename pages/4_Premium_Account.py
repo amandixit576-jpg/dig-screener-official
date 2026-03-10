@@ -8,6 +8,12 @@ from utils.formatters import format_inr
 
 # Setup
 st.set_page_config(page_title="Premium Portal | DIG", page_icon="🔒", layout="wide")
+# --- HIDE DEFAULT STREAMLIT SIDEBAR MENU ---
+st.markdown("""
+    <style>
+        [data-testid="stSidebarNav"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
 
 # Initialize memory (Taaki agar koi seedha is page pe aaye toh error na ho)
 if 'portfolio' not in st.session_state: 
