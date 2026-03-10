@@ -17,6 +17,12 @@ from utils.formatters import format_inr, format_large_number, format_df_to_crore
 # Naya: page_icon="logo.png"
 
 st.set_page_config(page_title="Dixit Investment Group | Screener", page_icon="logo.png", layout="wide")
+# --- HIDE DEFAULT STREAMLIT SIDEBAR MENU ---
+st.markdown("""
+    <style>
+        [data-testid="stSidebarNav"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
 # --- 1.5 SEO & META TAGS FOR GOOGLE/BING SEARCH ---
 seo_meta_tags = """
 <meta name="description" content="Dixit Investment Group (DIG) is a premium quantitative research and stock screener terminal. Analyze Indian NSE stocks, track mutual funds, plan SIPs, and use our AI-powered CA Audit tool for deep fundamental analysis.">
@@ -726,6 +732,7 @@ go_to_top_html = """
     </style>
 """
 st.markdown(go_to_top_html, unsafe_allow_html=True)
+
 
 
 
