@@ -5,6 +5,12 @@ from utils.formatters import format_inr, format_large_number
 
 # Streamlit config (Har page pe zaroori hai)
 st.set_page_config(page_title="Compare Assets | DIG", page_icon="⚖️", layout="wide")
+# --- HIDE DEFAULT STREAMLIT SIDEBAR MENU ---
+st.markdown("""
+    <style>
+        [data-testid="stSidebarNav"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
 
 st.markdown("<h2 style='color:#1E88E5;'>⚖️ Smart Peer Comparison Engine</h2>", unsafe_allow_html=True)
 st.markdown("<p style='color: #888;'>Compare any fundamentally strong companies side-by-side to find the true sector leader.</p>", unsafe_allow_html=True)
