@@ -1,40 +1,35 @@
 import streamlit as st
 
-st.set_page_config(page_title="Leadership | DIG", page_icon="⚜️", layout="wide")
+st.set_page_config(page_title="Careers | DIG", page_icon="⚜️", layout="wide")
 
-st.markdown("<h1 style='text-align: center; color: #1E88E5;'>Leadership</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #888; font-size: 1.2rem;'>The minds driving the next generation of financial technology.</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #1E88E5;'>Careers at DIG</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888; font-size: 1.2rem;'>Build the future of quantitative finance with us.</p>", unsafe_allow_html=True)
 st.write("---")
 
-col1, col2 = st.columns([1, 2.5])
+col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.markdown("<h1 style='text-align: center; font-size: 120px;'>⚜️</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'><b>Headquarters:</b> Lucknow, UP</p>", unsafe_allow_html=True)
-
+    st.markdown("### Why Join Dixit Investment Group?")
+    st.write(
+        "We are always on the lookout for bright minds who are passionate about the stock market, data automation, "
+        "and financial engineering. At DIG, we don't just write code; we build automated financial engines that scale."
+    )
+    
+    st.markdown("### 📌 Open Positions")
+    st.error("Currently, we do not have any active openings. However, we are constantly growing!")
+    
+    st.write(
+        "If you are an expert in **Python, Financial Auditing, or Quantitative Research**, drop your resume to our talent pool. "
+        "We will reach out when the right opportunity arises."
+    )
+    
 with col2:
-    st.markdown("### Aman Dixit")
-    st.markdown("<h5 style='color: #888;'>Founder & Quantitative Researcher</h5>", unsafe_allow_html=True)
-    
-    st.write(
-        "Aman brings a unique blend of core financial accounting and modern algorithmic analysis to the table. "
-        "With a strong foundation in commerce and rigorous training in advanced auditing practices, he recognized a massive gap "
-        "in how retail financial data is presented and verified."
-    )
-    st.write(
-        "Operating at the intersection of traditional portfolio management and automated tech, Aman founded DIG to build "
-        "a zero-friction screener. His focus remains on structuring high-end market data, automating complex firm operations, "
-        "and designing systems that provide institutional-level clarity to every user."
-    )
-    
-    st.markdown(
-        """
-        <br>
-        <a href="https://www.linkedin.com/in/amandixit29" target="_blank" style="text-decoration: none;">
-            <div style="background-color: #0A66C2; color: white; padding: 10px 20px; border-radius: 5px; width: 220px; text-align: center; font-weight: bold;">
-                🔗 Connect on LinkedIn
-            </div>
-        </a>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.markdown("### 📩 Drop Your Resume")
+    with st.form("resume_form"):
+        st.text_input("Full Name")
+        st.text_input("Email Address")
+        st.text_input("LinkedIn Profile URL")
+        st.text_area("Why do you want to join DIG?")
+        submit = st.form_submit_button("Submit Profile", type="primary", use_container_width=True)
+        if submit:
+            st.success("Thanks! Your profile has been added to our talent pool.")
