@@ -613,7 +613,7 @@ if st.session_state.current_view != "HOME":
 
         with tab3:
             st.markdown("### 📑 Annual Financial Statements (In Crores)")
-            stmt1, stmt2, stmt3 = st.tabs(["Annual P&L", "Quarterly P&L", "Balance Sheet"])
+            stmt1, stmt2, stmt3, stmt4 = st.tabs(["Annual P&L", "Quarterly P&L", "Balance Sheet", "Cash Flows"])
             with stmt1:
                 try:
                 fin_df = t_obj.financials
@@ -737,6 +737,44 @@ if st.session_state.current_view != "HOME":
                     st.warning("Balance Sheet data not available.")
             except Exception as e:
                 st.warning(f"Error fetching Balance Sheet: {e}")
+            with stmt4:
+                try:
+                cf_df = t_obj.cashflow
+                if not cf_df.empty:
+                    # 1. Dates ko saaf karna (e.g., "MAR 2024")
+                    cf_df.columns = pd.to_datetime(cf_df.columns).strftime('%b %Y').str.upper()
+
+                    # 2. Format mapping for Cash Flow
+                    desired_order_cf = {
+                        "Net Income From Continuing Operations": "Net Profit",
+                        "Depreciation And Amortization": "Depreciation / Non-Cash",
+                        "Change In Working Capital": "Changes in Working Capital",
+                        "Operating Cash Flow": "Operating Cash Flow",
+                        "Capital Expenditure": "Capital Expenditure (CAPEX)",
+                        "Investing Cash Flow": "Investing Cash Flow",
+                        "Financing Cash Flow": "Financing Cash Flow",
+                        "Changes In Cash": "Net Cash Flow"
+                    }
+
+                    organized_cf = {}
+                    for yf_key, display_name in desired_order_cf.items():
+                        if yf_key in cf_df.index:
+                            organized_cf[display_name] = cf_df.loc[yf_key]
+                        else:
+                            organized_cf[display_name] = pd.Series(pd.NA, index=cf_df.columns)
+
+                    # DataFrame banana
+                    clean_cf_df = pd.DataFrame(organized_cf).T
+
+                    # 3. N/A wale purane saalo ko hide karna
+                    clean_cf_df = clean_cf_df.dropna(axis=1, how='all')
+
+                    # 4. Aapka custom Crore formatter use karke display karna
+                    st.dataframe(format_df_to_crores(clean_cf_df), use_container_width=True)
+                else:
+                    st.warning("Cash Flow data not available.")
+            except Exception as e:
+                st.warning(f"Error fetching Cash Flow: {e}")
 
         with tab4:
             st.markdown("### 📅 Recent Dividends & Corporate Actions")
