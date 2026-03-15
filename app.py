@@ -193,7 +193,7 @@ nav1, nav2, nav3, nav4, nav5, nav6, nav7, nav8 = st.columns([1.5, 1, 1, 1, 1, 1.
 
 # DIG logo ko thoda bada kiya aur straight line ke liye margin set kiya
 with nav1: 
-    st.markdown("<a href='/' target='_self' style='text-decoration: none;'><h3 style='color:#1E88E5; margin-top: 0px; margin-bottom: 0px;'>⚜️ DIG</h3></a>", unsafe_allow_html=True)
+    st.markdown("<a href='/' target='_self' style='text-decoration: none;'><h1 style='color: #00E570; font-size: 42px; font-weight: 900; margin: 0px; line-height: 1; background: linear-gradient(to right, #00E570, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: sans-serif; letter-spacing: -2px;'>DIG</h1></a>", unsafe_allow_html=True)
     
 # Buttons hata kar pure linkable text laga diye with perfect alignment
 link_style = "color: #a1a1aa; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block; margin-top: 8px;"
