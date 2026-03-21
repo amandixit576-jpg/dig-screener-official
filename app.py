@@ -8,10 +8,21 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 import pandas as pd
+import io
 # 🔥 NAYE MODULAR IMPORTS 🔥
 from services.stock_data import fetch_safe_info, fetch_stock_history, fetch_financials
 from utils.formatters import format_inr, format_large_number, format_df_to_crores
 
+# --- EXCEL CONVERTER ENGINE ---
+@st.cache_data(show_spinner=False)
+def convert_dfs_to_excel(df_dict):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        for sheet_name, df in df_dict.items():
+            if not df.empty:
+                df.to_excel(writer, sheet_name=sheet_name)
+    processed_data = output.getvalue()
+    return processed_data
 # --- 🌍 LIVE STOCK DATABASE (ZERODHA KITE API) ---
 @st.cache_data(ttl=86400) # Din mein sirf 1 baar fetch karega taaki site super-fast rahe!
 def fetch_all_stocks():
@@ -864,7 +875,33 @@ Want to see the deep-dive audit? Hit the link in my bio to use my custom screene
             st.write("---")
             report_df = pd.DataFrame({"Metric": ["Company", "Price", "P/E", "ROE", "Debt/Eq", "Analysis By"], "Value": [display_name, curr_price, info.get('trailingPE'), info.get('returnOnEquity'), info.get('debtToEquity'), "DIG Screener | 📸 @digscreener.in"]})
             st.download_button(label="📥 Download Branded CSV Report", data=report_df.to_csv(index=False).encode('utf-8'), file_name=f"{user_ticker}_AmanCreats_Report.csv", mime="text/csv", type="primary")
+            st.markdown("---")
+        st.markdown("### 📥 CA-Level Audit: Export Financial Model")
 
+        try:
+            # Dictionary of all financial tables
+            financial_data = {
+                "Annual P&L": fin_df,
+                "Quarterly P&L": q_fin_df,
+                "Balance Sheet": bs_df,
+                "Cash Flows": cf_df
+            }
+            
+            # Convert to Excel using the function we added at the top
+            excel_file = convert_dfs_to_excel(financial_data)
+            
+            # Final Download Button
+            st.download_button(
+                label="📊 Download Complete Financial Model (.xlsx)",
+                data=excel_file,
+                file_name=f"DIG_Financial_Model.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary"
+            )
+        except NameError:
+            # Agar user ne abhi tak Financials tab nahi khola hai toh ye message aayega
+            st.info("💡 Note: Excel download karne ke liye pehle ek baar 'Financials' tab open karke data load hone dein.")
+        
         with tab8:
             st.markdown("### 🧑‍💼 CA's Audit Desk (Advanced Risk Lens)")
             st.caption("Forensic level checks to identify working capital stress and governance red flags.")
