@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import requests
 import streamlit as st
+import sqlite3
 
 # --- PRO DATA ENGINE (ANTI-BLOCK) ---
 # Ek "Human-like" session banate hain taaki Yahoo block na kare
@@ -35,12 +36,29 @@ def fetch_safe_info(ticker_symbol):
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_stock_history(ticker_symbol, period="1y"):
     try:
-        t = yf.Ticker(ticker_symbol, session=session)
-        df = t.history(period=period)
-        if df.empty:
-            df = t.history(period="1mo")
+        # 1. Godown (Database) check karega
+        conn = sqlite3.connect('dig_master.db')
+        table_name = ticker_symbol.replace('.NS', '')
+        
+        query = f"SELECT * FROM {table_name}"
+        df = pd.read_sql_query(query, conn)
+        
+        df['Date'] = pd.to_datetime(df['Date'])
+        df.set_index('Date', inplace=True)
+        
+        conn.close()
         return df
-    except: return pd.DataFrame()
+        
+    except Exception as e:
+        # 2. Agar stock local DB mein nahi hai, toh Yahoo se layega
+        try:
+            t = yf.Ticker(ticker_symbol, session=session)
+            df = t.history(period=period)
+            if df.empty:
+                df = t.history(period="1mo")
+            return df
+        except:
+            return pd.DataFrame()
 
 @st.cache_data(ttl=86400, show_spinner=False)
 def fetch_financials(ticker_symbol):
