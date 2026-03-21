@@ -14,23 +14,37 @@ session.headers.update({
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_safe_info(ticker_symbol):
-    import time # Local import taaki code smoothly chale
+    import time
+    import requests
     
-    # API ko 3 baar try karne ka chance denge (Smart Retry Logic)
+    # 1. Sabse badi galti ka ilaj: Agar naam ke aage .NS nahi laga hai, toh khud laga do
+    if not ticker_symbol.endswith('.NS') and not ticker_symbol.endswith('.BO'):
+        yahoo_symbol = f"{ticker_symbol}.NS"
+    else:
+        yahoo_symbol = ticker_symbol
+        
+    # 2. Smart Retry Logic (Agar Yahoo block kare toh naye bhes mein jayega)
     for attempt in range(3):
         try:
-            t = yf.Ticker(ticker_symbol, session=session)
+            # Har try mein naya aur strong "User-Agent" (Bhes badalna)
+            session = requests.Session()
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            })
+            
+            t = yf.Ticker(yahoo_symbol, session=session)
             inf = t.info
             
-            # Agar data theek se aa gaya (कम से कम 10 values)
-            if inf and len(inf) > 10:
+            # 3. Check karna ki asli data aaya hai ya khali dabba (Market Cap check karke)
+            if inf and ('marketCap' in inf or len(inf) > 10):
                 return inf
             else:
-                time.sleep(0.5) # Agar Yahoo ne block kiya, toh 0.5 sec ruk kar dobara maangega
-        except:
-            time.sleep(1) # Error aane par 1 sec saans lega aur retry karega
+                time.sleep(1) # 1 second ruk kar dobara try karega
+                
+        except Exception as e:
+            time.sleep(1)
             
-    # Agar 3 baar mein bhi fail ho jaye tabhi khali return karega
+    # Agar 3 baar mein bhi fail ho jaye
     return {}
 
 @st.cache_data(ttl=3600, show_spinner=False)
